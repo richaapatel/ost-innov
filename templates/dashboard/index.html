@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="dashboard-page py-4 py-lg-5">
+    <div class="container">
+        <div class="dashboard-welcome-card mb-4 p-4 p-lg-5">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <span class="page-eyebrow"><i class="bi bi-sparkles me-1"></i>Your SkillSwap space</span>
+                    <h1 class="display-6 fw-bold mt-2 mb-2">Welcome, {{ first_name }}</h1>
+                    <p class="lead text-secondary mb-0">Keep learning, keep sharing, and find your next great exchange.</p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a href="{% url 'skills:list' %}" class="btn btn-primary px-4"><i class="bi bi-plus-circle me-1"></i>Update your skills</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="dashboard-stat-card"><span class="dashboard-stat-icon stat-icon-primary"><i class="bi bi-lightbulb"></i></span><div><div class="dashboard-stat-number">{{ statistics.offered_count }}</div><div class="dashboard-stat-label">Skills I offer</div><div class="dashboard-stat-support">Ready to share</div></div></div></div>
+            <div class="col-md-4"><div class="dashboard-stat-card"><span class="dashboard-stat-icon stat-icon-accent"><i class="bi bi-stars"></i></span><div><div class="dashboard-stat-number">{{ statistics.wanted_count }}</div><div class="dashboard-stat-label">Skills I want</div><div class="dashboard-stat-support">Your learning goals</div></div></div></div>
+            <div class="col-md-4"><div class="dashboard-stat-card"><span class="dashboard-stat-icon stat-icon-danger"><i class="bi bi-inbox"></i></span><div><div class="dashboard-stat-number">{{ statistics.pending_count }}</div><div class="dashboard-stat-label">Pending requests</div><div class="dashboard-stat-support">Waiting for a next step</div></div></div></div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4">
+                <section class="dashboard-panel profile-summary-panel h-100 p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3"><div class="profile-avatar profile-avatar-small">{{ dashboard_user.initials }}</div><div class="min-w-0"><h2 class="h5 fw-bold mb-1 text-truncate">{{ dashboard_user.name }}</h2><p class="small text-secondary mb-0">Member since {{ dashboard_user.created_at|date:'F Y' }}</p></div></div>
+                    <p class="small text-secondary dashboard-bio mb-4">{% if dashboard_user.bio %}{{ dashboard_user.bio }}{% else %}Add a little about yourself so the community knows what you enjoy learning and sharing.{% endif %}</p>
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-sm">View profile <i class="bi bi-arrow-right ms-1"></i></a>
+                </section>
+            </div>
+            <div class="col-lg-8">
+                <section class="dashboard-panel h-100 p-4">
+                    <div class="d-flex justify-content-between align-items-center gap-3 mb-3"><div><span class="page-eyebrow">Your toolkit</span><h2 class="h5 fw-bold mt-1 mb-0">Skills at a glance</h2></div><a href="{% url 'skills:list' %}" class="small text-decoration-none">Manage skills</a></div>
+                    <div class="row g-4">
+                        <div class="col-md-6"><div class="dashboard-skill-heading"><i class="bi bi-arrow-up-right-circle me-1"></i>Skills I offer</div><div class="d-flex flex-wrap gap-2">{% for skill in dashboard_user.offered_skills.all %}{% include 'includes/skill_badge.html' with skill=skill badge_class='skill-badge-large' %}{% empty %}<div class="dashboard-empty-inline">No offered skills yet. <a href="{% url 'skills:list' %}">Explore skills</a></div>{% endfor %}</div></div>
+                        <div class="col-md-6"><div class="dashboard-skill-heading dashboard-skill-heading-accent"><i class="bi bi-bookmark-star me-1"></i>Skills I want to learn</div><div class="d-flex flex-wrap gap-2">{% for skill in dashboard_user.wanted_skills.all %}{% include 'includes/skill_badge.html' with skill=skill badge_class='skill-badge-large skill-badge-accent' %}{% empty %}<div class="dashboard-empty-inline">No learning goals yet. <a href="{% url 'skills:list' %}">Find a skill</a></div>{% endfor %}</div></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-end mb-3"><div><span class="page-eyebrow">Made for your goals</span><h2 class="h4 fw-bold mt-1 mb-0">Recommended matches</h2></div><a href="{% url 'community:matches' %}" class="small text-decoration-none">View all matches <i class="bi bi-arrow-right"></i></a></div>
+        {% if statistics.wanted_count %}
+            <div class="row g-4 mb-5">{% for match in matches %}<div class="col-lg-4">{% include 'includes/match_card.html' with match=match %}</div>{% empty %}<div class="col-12"><div class="dashboard-empty-state"><i class="bi bi-compass"></i><h3 class="h5 fw-bold mt-3">No matches yet</h3><p class="text-secondary mb-3">Try adding another skill you want to learn to discover more people.</p><a href="{% url 'skills:list' %}" class="btn btn-outline-primary">Explore skills</a></div></div>{% endfor %}</div>
+        {% else %}
+            <div class="dashboard-empty-state mb-5"><i class="bi bi-compass"></i><h3 class="h5 fw-bold mt-3">Add a learning goal to get matched</h3><p class="text-secondary mb-3">Add skills you want to learn to start receiving recommendations.</p><a href="{% url 'skills:list' %}" class="btn btn-primary">Explore skills</a></div>
+        {% endif %}
+
+        <div class="row g-4 mb-5">
+            <div class="col-lg-6"><div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 fw-bold mb-0">Received requests</h2><a href="{% url 'exchanges:list' %}?tab=received" class="small text-decoration-none">View all requests</a></div><div class="d-grid gap-3">{% for exchange in received_requests %}{% include 'includes/exchange_card.html' with exchange=exchange mode='received' %}{% empty %}<div class="dashboard-empty-state compact"><i class="bi bi-inbox"></i><p class="text-secondary mb-0 mt-2">No one has sent you a request yet.</p></div>{% endfor %}</div></div>
+            <div class="col-lg-6"><div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 fw-bold mb-0">Sent requests</h2><a href="{% url 'exchanges:list' %}?tab=sent" class="small text-decoration-none">View all requests</a></div><div class="d-grid gap-3">{% for exchange in sent_requests %}{% include 'includes/exchange_card.html' with exchange=exchange mode='sent' %}{% empty %}<div class="dashboard-empty-state compact"><i class="bi bi-send"></i><p class="text-secondary mb-0 mt-2">No sent requests yet. <a href="{% url 'community:discover' %}">Discover people</a>.</p></div>{% endfor %}</div></div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-end mb-3"><div><span class="page-eyebrow">Your activity</span><h2 class="h4 fw-bold mt-1 mb-0">Analytics at a glance</h2></div></div>
+        <div class="row g-4 mb-5">
+            <div class="col-lg-6"><section class="dashboard-panel analytics-panel h-100 p-4"><div class="d-flex justify-content-between align-items-start gap-3 mb-3"><div><h3 class="h5 fw-bold mb-1">Skill demand</h3><p class="small text-secondary mb-0">What the community is looking to learn.</p></div><span class="analytics-icon"><i class="bi bi-bar-chart-line"></i></span></div><img src="{% url 'dashboard:skill_demand_chart' %}" class="dashboard-chart" alt="Bar chart showing the most requested skill categories"><p class="small text-secondary mb-0 mt-3">{{ skill_demand_summary }}</p></section></div>
+            <div class="col-lg-6"><section class="dashboard-panel analytics-panel h-100 p-4"><div class="d-flex justify-content-between align-items-start gap-3 mb-3"><div><h3 class="h5 fw-bold mb-1">Exchange status</h3><p class="small text-secondary mb-0">A snapshot of your requests.</p></div><span class="analytics-icon analytics-icon-accent"><i class="bi bi-pie-chart"></i></span></div><img src="{% url 'dashboard:exchange_status_chart' %}" class="dashboard-chart" alt="Bar chart showing your exchange requests by status"><p class="small text-secondary mb-0 mt-3">{{ exchange_status_summary }}</p></section></div>
+        </div>
+
+        <section class="quick-actions-panel p-4 p-lg-5"><div class="row align-items-center g-4"><div class="col-lg-4"><span class="page-eyebrow">Keep the momentum</span><h2 class="h4 fw-bold mt-1 mb-0">What would you like to do next?</h2></div><div class="col-lg-8"><div class="row g-2"><div class="col-sm-6 col-xl-3"><a href="{% url 'skills:list' %}" class="quick-action-link"><i class="bi bi-lightbulb"></i><span>Explore skills</span></a></div><div class="col-sm-6 col-xl-3"><a href="{% url 'community:discover' %}" class="quick-action-link"><i class="bi bi-people"></i><span>Discover people</span></a></div><div class="col-sm-6 col-xl-3"><a href="{% url 'community:matches' %}" class="quick-action-link"><i class="bi bi-stars"></i><span>View matches</span></a></div><div class="col-sm-6 col-xl-3"><a href="{% url 'exchanges:list' %}" class="quick-action-link"><i class="bi bi-arrow-left-right"></i><span>View exchanges</span></a></div><div class="col-sm-6 col-xl-3"><a href="{% url 'accounts:profile' %}" class="quick-action-link"><i class="bi bi-person-gear"></i><span>Edit profile</span></a></div></div></div></div></section>
+    </div>
+</section>
+{% include 'includes/exchange_request_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/exchanges.js' %}"></script>{% endblock %}

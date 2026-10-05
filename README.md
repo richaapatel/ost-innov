@@ -1,6 +1,6 @@
 # SkillSwap
 
-This repository contains the SkillSwap Django application: a custom email-based User model, MySQL-backed skills and exchanges, session authentication, profiles, a skill library, community discovery, matching recommendations, and the exchange workflow. Dashboard analytics are not implemented yet.
+This repository contains the SkillSwap Django application: a custom email-based User model, MySQL-backed skills and exchanges, session authentication, profiles, a skill library, community discovery, matching recommendations, the exchange workflow, and an authenticated dashboard with Matplotlib analytics.
 
 ## Stage 3 authentication
 
@@ -57,6 +57,17 @@ pending → rejected
 ```
 
 Rejected and completed requests are terminal. A deterministic active-request key prevents duplicate pending requests for the same learner, teacher, and skill; it is cleared when a request leaves `pending`, allowing a later request.
+
+## Dashboard and analytics
+
+Authenticated users can access the central dashboard at `/dashboard/` (`dashboard:index`). It summarizes offered and wanted skills, pending requests, recommended matches, recent received and sent requests, quick actions, and personal activity.
+
+The dashboard includes two authenticated, dynamically generated Matplotlib chart endpoints:
+
+- `/dashboard/charts/skill-demand.png` (`dashboard:skill_demand_chart`) — the five most requested skill categories across the community.
+- `/dashboard/charts/exchange-status.png` (`dashboard:exchange_status_chart`) — the current user's pending, accepted, rejected, and completed requests.
+
+Chart images are generated in memory using Matplotlib's non-GUI `Agg` backend. No chart files are written to the repository, `static/`, or `media/`. Both the dashboard and chart endpoints require a logged-in session.
 
 ## Stage 2 data layer
 

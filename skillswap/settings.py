@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'skills',
     'exchanges',
     'community',
+    'dashboard',
 ]
 
 MIDDLEWARE = [
