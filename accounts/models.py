@@ -42,6 +42,17 @@ class User(AbstractUser):
     
     name = models.CharField(max_length=80, verbose_name="display name")
     bio = models.CharField(max_length=500, blank=True)
+
+    offered_skills = models.ManyToManyField(
+        'skills.Skill',
+        blank=True,
+        related_name='teachers',
+    )
+    wanted_skills = models.ManyToManyField(
+        'skills.Skill',
+        blank=True,
+        related_name='learners',
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     
     'accounts',
     'core',
+    'skills',
+    'exchanges',
 ]
 
 MIDDLEWARE = [

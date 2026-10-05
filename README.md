@@ -1,6 +1,32 @@
-# SkillSwap Stage 1
+# SkillSwap Stage 2
 
-This repository contains the foundational setup for the SkillSwap application (Stage 1). It provides a Django backend configured with a custom User model, a MySQL database running in Docker, and foundational settings, templates, and static files.
+This repository contains the foundational setup for SkillSwap plus the Stage 2 data layer. It provides a Django backend configured with a custom User model, MySQL in Docker, skills and user skill relationships, and exchange request integrity services. Stage 3 UI and discovery functionality are not implemented yet.
+
+## Stage 2 data layer
+
+- `Skill` stores normalized, case-insensitively unique skill names, descriptions, categories, and timestamps.
+- Users have `offered_skills` and `wanted_skills` many-to-many relationships with `Skill`.
+- `Exchange` records teacher, learner, skill, message, status, and timestamps. Valid statuses are `pending`, `accepted`, `rejected`, and `completed`.
+- Exchange services enforce teacher offerings, participant permissions, duplicate pending-request prevention, and the allowed status transitions.
+
+## Demo data
+
+Run the idempotent seed command:
+
+```bash
+python manage.py seed_demo_data
+# or
+make seed
+```
+
+It creates six demo users, ten skills, and four valid exchanges covering every exchange status. Re-running it does not duplicate those records and does not delete existing data.
+
+Development-only demo credentials:
+
+- Users: `alice@example.com`, `bob@example.com`, `carlos@example.com`, `diana@example.com`, `elena@example.com`, `frank@example.com`
+- Password: `SkillSwapDemoOnly123!`
+
+These credentials are for local development only. Change or remove them before using any non-development environment.
 
 ## Prerequisites
 - Python 3.12+

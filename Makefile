@@ -1,4 +1,4 @@
-.PHONY: install mysql-up mysql-down mysql-logs mysql-status migrate makemigrations check test shell superuser run setup down
+.PHONY: install mysql-up mysql-down mysql-logs mysql-status migrate makemigrations check test shell superuser run seed setup down
 
 install:
 	pip install -r requirements.txt
@@ -26,6 +26,9 @@ check:
 
 test:
 	python manage.py test
+
+seed:
+	python manage.py seed_demo_data
 
 shell:
 	python manage.py shell
