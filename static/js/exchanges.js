@@ -18,6 +18,7 @@
         $('#exchange-skill-error, #exchange-message-error').text('');
         $('#exchange-request-general-error, #exchange-request-success').addClass('d-none').text('');
         $('#exchange-request-submit').prop('disabled', false);
+        $('#exchange-request-submit').removeData('submitting');
         $('.exchange-submit-label').removeClass('d-none');
         $('.exchange-submit-loading').addClass('d-none');
         $('#exchange-message-count').text('0 / 500');
@@ -79,6 +80,7 @@
             $('#exchange-skill-id, #exchange-message').removeClass('is-invalid');
             $('#exchange-skill-error, #exchange-message-error').text('');
             submit.prop('disabled', true);
+            submit.data('submitting', true);
             $('.exchange-submit-label').addClass('d-none');
             $('.exchange-submit-loading').removeClass('d-none');
 
@@ -91,19 +93,19 @@
                 $('#exchange-request-success').removeClass('d-none').text(response.message || 'Learning request sent successfully.');
                 $('.exchange-submit-label').text('Request sent').removeClass('d-none');
                 $('.exchange-submit-loading').addClass('d-none');
-                submit.prop('disabled', false);
+                submit.prop('disabled', true).removeData('submitting');
             }).fail(function (xhr) {
                 const response = xhr.responseJSON || {};
                 $('#exchange-request-general-error').removeClass('d-none').text(response.message || 'We could not send that request. Please try again.');
                 setFieldErrors(response.errors || {});
-                submit.prop('disabled', false);
+                submit.prop('disabled', false).removeData('submitting');
                 $('.exchange-submit-label').removeClass('d-none');
                 $('.exchange-submit-loading').addClass('d-none');
             });
         });
 
         $(modalElement).on('hide.bs.modal', function (event) {
-            if ($('#exchange-request-submit').prop('disabled')) {
+            if ($('#exchange-request-submit').data('submitting')) {
                 event.preventDefault();
             }
         });

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -8,9 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-fallback-key")
-DEBUG = os.getenv("DEBUG", "False") == "True"
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+DEBUG = os.getenv("DEBUG", "False").strip().lower() in {"1", "true", "yes", "on"}
+SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
+if not SECRET_KEY:
+    raise ImproperlyConfigured("SECRET_KEY must be set in the environment.")
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if host.strip()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -62,13 +65,16 @@ WSGI_APPLICATION = 'skillswap.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'skillswap'),
-        'USER': os.getenv('DB_USER', 'skillswap_user'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'skillswap_password'),
+        'NAME': os.getenv('DB_NAME', '').strip(),
+        'USER': os.getenv('DB_USER', '').strip(),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
         'PORT': os.getenv('DB_PORT', '3306'),
     }
 }
+
+if not DATABASES['default']['NAME'] or not DATABASES['default']['USER']:
+    raise ImproperlyConfigured('DB_NAME and DB_USER must be set in the environment.')
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -104,3 +110,10 @@ AUTH_USER_MODEL = 'accounts.User'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:home'
 LOGOUT_REDIRECT_URL = 'core:home'
+
+# These remain development-friendly over HTTP while becoming secure automatically
+# when DEBUG is disabled behind HTTPS.
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'

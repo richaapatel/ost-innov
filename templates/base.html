@@ -24,15 +24,15 @@
             </button>
             <div class="collapse navbar-collapse" id="siteNavigation">
                 <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3 ms-auto pt-3 pt-lg-0">
-                    <a class="btn btn-sm btn-link text-decoration-none" href="{% url 'core:home' %}">Home</a>
-                    <a class="btn btn-sm btn-link text-decoration-none" href="{% url 'skills:list' %}">Skills</a>
-                    <a class="btn btn-sm btn-link text-decoration-none" href="{% url 'community:discover' %}">Discover</a>
+                    <a class="btn btn-sm btn-link text-decoration-none {% if request.resolver_match.app_name == 'core' and request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'core:home' %}" {% if request.resolver_match.app_name == 'core' and request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>Home</a>
+                    <a class="btn btn-sm btn-link text-decoration-none {% if request.resolver_match.app_name == 'skills' %}active{% endif %}" href="{% url 'skills:list' %}" {% if request.resolver_match.app_name == 'skills' %}aria-current="page"{% endif %}>Skills</a>
+                    <a class="btn btn-sm btn-link text-decoration-none {% if request.resolver_match.app_name == 'community' and request.resolver_match.url_name == 'discover' %}active{% endif %}" href="{% url 'community:discover' %}" {% if request.resolver_match.app_name == 'community' and request.resolver_match.url_name == 'discover' %}aria-current="page"{% endif %}>Discover</a>
                     {% if user.is_authenticated %}
-                        <a class="btn btn-sm btn-link text-decoration-none" href="{% url 'community:matches' %}"><i class="bi bi-stars me-1"></i>Matches</a>
-                        <a class="btn btn-sm btn-link text-decoration-none" href="{% url 'exchanges:list' %}"><i class="bi bi-arrow-left-right me-1"></i>Exchanges</a>
-                        <a class="btn btn-sm btn-primary px-3" href="{% url 'dashboard:index' %}"><i class="bi bi-grid-1x2 me-1"></i>Dashboard</a>
+                        <a class="btn btn-sm btn-link text-decoration-none {% if request.resolver_match.app_name == 'community' and request.resolver_match.url_name == 'matches' %}active{% endif %}" href="{% url 'community:matches' %}" {% if request.resolver_match.url_name == 'matches' %}aria-current="page"{% endif %}><i class="bi bi-stars me-1"></i>Matches</a>
+                        <a class="btn btn-sm btn-link text-decoration-none {% if request.resolver_match.app_name == 'exchanges' %}active{% endif %}" href="{% url 'exchanges:list' %}" {% if request.resolver_match.app_name == 'exchanges' %}aria-current="page"{% endif %}><i class="bi bi-arrow-left-right me-1"></i>Exchanges</a>
+                        <a class="btn btn-sm btn-primary px-3 {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:index' %}" {% if request.resolver_match.app_name == 'dashboard' %}aria-current="page"{% endif %}><i class="bi bi-grid-1x2 me-1"></i>Dashboard</a>
                         <span class="d-none d-sm-inline small text-secondary me-lg-2">Hi, {{ user.name }}</span>
-                        <a class="btn btn-sm btn-link text-decoration-none" href="{% url 'accounts:profile' %}"><i class="bi bi-person-circle me-1"></i>Profile</a>
+                        <a class="btn btn-sm btn-link text-decoration-none {% if request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'accounts:profile' %}" {% if request.resolver_match.url_name == 'profile' %}aria-current="page"{% endif %}><i class="bi bi-person-circle me-1"></i>Profile</a>
                         <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-outline-primary w-100">Log out</button>
@@ -64,7 +64,7 @@
     <footer class="site-footer py-4 mt-5">
         <div class="container d-flex flex-column flex-sm-row justify-content-between gap-2 small text-secondary">
             <span>SkillSwap — learn something. Teach something.</span>
-            <span>Built for curious people.</span>
+            <span><a href="{% url 'skills:list' %}" class="text-decoration-none">Explore skills</a><span class="mx-2">·</span><a href="{% url 'community:discover' %}" class="text-decoration-none">Meet the community</a></span>
         </div>
     </footer>
 

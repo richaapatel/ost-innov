@@ -31,7 +31,7 @@ def create_exchange_request(*, learner: User, teacher_id: int, skill_id: int, me
 
     try:
         with transaction.atomic():
-            teacher = User.objects.select_for_update().filter(pk=teacher_id).first()
+            teacher = User.objects.select_for_update().filter(pk=teacher_id, is_active=True).first()
             if teacher is None:
                 raise ExchangeServiceError('The selected teacher does not exist.')
             if teacher.pk == learner.pk:

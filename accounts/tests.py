@@ -24,9 +24,9 @@ class CustomUserTests(TestCase):
         self.assertFalse(user.is_superuser)
         self.assertTrue(user.check_password('testpassword123'))
         
-        # Test username is not used/none
-        with self.assertRaises(AttributeError):
-            user.username
+        # Django's username field is intentionally disabled for email auth.
+        self.assertNotIn('username', {field.name for field in user._meta.fields})
+        self.assertIsNone(user.username)
 
     def test_create_superuser(self):
         admin_user = User.objects.create_superuser(

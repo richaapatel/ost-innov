@@ -118,6 +118,7 @@ class DashboardAccessAndContentTests(DashboardTestMixin, TestCase):
 
     def test_empty_dashboard_state_is_rendered(self):
         empty_user = self.create_user('empty-dashboard@example.com', 'Empty User')
+        self.user.wanted_skills.clear()
         self.client.force_login(empty_user)
         response = self.client.get(reverse('dashboard:index'))
 

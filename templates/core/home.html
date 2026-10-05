@@ -1,12 +1,35 @@
 {% extends 'base.html' %}
 
-{% block title %}Welcome to SkillSwap{% endblock %}
+{% block title %}SkillSwap — Learn something. Teach something.{% endblock %}
 
 {% block content %}
-<div class="p-5 mb-4 bg-light rounded-3">
-    <div class="container-fluid py-5">
-        <h1 class="display-5 fw-bold">SkillSwap</h1>
-        <p class="col-md-8 fs-4">A minimal Django foundation for Stage 1.</p>
+<section class="landing-page py-4 py-lg-5">
+    <div class="container">
+        <div class="landing-hero p-4 p-md-5 mb-4">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-7">
+                    <span class="page-eyebrow"><i class="bi bi-arrow-left-right me-1"></i>Learn by sharing</span>
+                    <h1 class="display-4 fw-bold mt-3 mb-3">Learn something. <span class="text-primary">Teach something.</span></h1>
+                    <p class="lead text-secondary mb-4">SkillSwap connects curious people who want to trade knowledge, build confidence, and grow together.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'skills:list' %}" class="btn btn-primary btn-lg px-4">Explore skills <i class="bi bi-arrow-right ms-1"></i></a>
+                        {% if user.is_authenticated %}<a href="{% url 'dashboard:index' %}" class="btn btn-outline-primary btn-lg px-4">Open dashboard</a>{% else %}<a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-lg px-4">Join the community</a>{% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="landing-visual">
+                        <div class="landing-orbit landing-orbit-one"></div><div class="landing-orbit landing-orbit-two"></div>
+                        <div class="landing-visual-card landing-visual-card-main"><span class="landing-visual-icon"><i class="bi bi-stars"></i></span><div><strong>Find your next match</strong><p class="small text-secondary mb-0">Skills that move both ways.</p></div></div>
+                        <div class="landing-visual-card landing-visual-card-small"><i class="bi bi-check2-circle text-success me-2"></i>Share what you know</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4"><div class="landing-feature"><span class="landing-feature-icon"><i class="bi bi-search"></i></span><h2 class="h5 fw-bold mt-3">Explore skills</h2><p class="small text-secondary mb-0">Find the knowledge you want to bring into your week.</p></div></div>
+            <div class="col-md-4"><div class="landing-feature"><span class="landing-feature-icon landing-feature-icon-accent"><i class="bi bi-people"></i></span><h2 class="h5 fw-bold mt-3">Meet people</h2><p class="small text-secondary mb-0">Discover members whose goals complement your own.</p></div></div>
+            <div class="col-md-4"><div class="landing-feature"><span class="landing-feature-icon landing-feature-icon-warm"><i class="bi bi-arrow-left-right"></i></span><h2 class="h5 fw-bold mt-3">Make an exchange</h2><p class="small text-secondary mb-0">Turn shared interests into a practical learning connection.</p></div></div>
+        </div>
     </div>
-</div>
+</section>
 {% endblock %}

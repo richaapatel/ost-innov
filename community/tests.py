@@ -64,7 +64,7 @@ class DiscoveryTests(CommunityTestDataMixin, TestCase):
     def test_authenticated_current_user_is_excluded(self):
         self.client.force_login(self.current)
         response = self.client.get(reverse('community:discover'))
-        self.assertNotContains(response, 'Current Member')
+        self.assertNotIn(self.current, response.context['page_obj'].object_list)
 
     def test_pagination_defaults_to_nine_and_preserves_filters(self):
         for index in range(10):

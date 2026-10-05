@@ -1,92 +1,82 @@
 # SkillSwap
 
-This repository contains the SkillSwap Django application: a custom email-based User model, MySQL-backed skills and exchanges, session authentication, profiles, a skill library, community discovery, matching recommendations, the exchange workflow, and an authenticated dashboard with Matplotlib analytics.
+SkillSwap is a Django monolith for learning and teaching skills in a community. Members can manage their profiles, discover skills and people, find reciprocal matches, send exchange requests, and monitor activity from an authenticated dashboard.
 
-## Stage 3 authentication
+## Features
 
-Authentication uses Django's built-in session system. Users register and log in with their email address, and passwords are hashed with Django's password hashing utilities.
+- Email-based Django session authentication with server-side password validation.
+- Current-user profile editing with public member profiles.
+- Searchable, category-filtered skill library with offered/wanted relationships.
+- Community discovery and reciprocal skill matching.
+- Exchange requests with protected permissions and the state machine:
 
-- Registration: `/accounts/register/`
-- Login: `/accounts/login/`
-- Logout: POST `/accounts/logout/`
-- Protected-route example: `/protected/`
+  ```text
+  pending → accepted → completed
+  pending → rejected
+  ```
 
-Registration requires a full name, a unique email address, and a password from 8–128 characters containing uppercase, lowercase, a number, and a special character. Invalid credentials use a generic error message, inactive users cannot authenticate, and safe `next` redirects are preserved after login. Logout is CSRF-protected and session-based; authentication is not stored in browser storage or application-managed tokens.
+- Authenticated dashboard with request summaries, match recommendations, and in-memory Matplotlib analytics.
+- Django admin configuration for users, skills, and exchanges.
 
-## Stage 4 profile
+## Technology stack
 
-Authenticated users can view and edit their current profile at `/profile/` (`accounts:profile`). The profile displays an initials avatar, name, read-only email address, bio, member-since date, and any existing offered or wanted skills. Users can edit only their name and bio; updates are validated server-side, CSRF-protected, and saved through a POST–redirect–GET flow. Anonymous users are redirected to login.
+- Python 3.12+
+- Django
+- MySQL 8.0 and `mysqlclient`
+- Django templates, forms, ORM, sessions, and CSRF protection
+- Bootstrap 5.3, Bootstrap Icons, and jQuery through versioned CDN links
+- Matplotlib with the non-GUI `Agg` backend
 
-## Skills, discovery, and public member profiles
-
-- Skills: `/skills/` (`skills:list`) is publicly viewable and supports case-insensitive search, description search, and database-backed category filters.
-- Authenticated users can create shared skills at `/skills/create/` and add or remove existing skills from their offered or wanted lists. These actions use CSRF-protected Django POST endpoints with progressive jQuery/AJAX enhancement.
-- Discovery: `/discover/` (`community:discover`) supports member-name search, offered-skill filters, wanted-skill filters, combined filters, and nine-member pagination.
-- Public profiles: `/members/<user_id>/` (`community:member_detail`) show only public profile information, initials, member-since date, and skill relationships. Email, password, permissions, and other private account data are not displayed.
-
-Example discovery URL:
-
-```text
-/discover/?search=python&offered_skill=3&wanted_skill=7
-```
-
-## Matching
-
-Authenticated users can visit `/discover/matches/` (`community:matches`). A candidate must offer at least one skill the current user wants to learn. The match score is the number of shared learning opportunities in both directions:
-
-- Skills you want that they offer.
-- Skills they want that you offer.
-
-Results are sorted by score descending, then member name alphabetically. A match is labelled “Two-way match” only when both overlap sets are non-empty. The optional `?skill=<id>` filter is limited to skills currently in the user's wanted-skills list. Users without wanted skills receive an intentional prompt to add learning goals in the Skill Library.
-
-## Exchange requests
-
-Authenticated users can request to learn from another member through the reusable Request to Learn flow, or use the server-rendered fallback at `/exchanges/create/`. The selected skill list is restricted to the teacher's current offered skills and all relationships are rechecked server-side.
-
-- Exchange list: `/exchanges/` (`exchanges:list`)
-- Exchange detail: `/exchanges/<id>/` (`exchanges:detail`)
-- Requests are visible to the teacher as Received Requests and to the learner as Sent Requests.
-- Only the teacher can accept or reject a pending request.
-- Either participant can complete an accepted request.
-
-The state machine is:
+## Project structure
 
 ```text
-pending → accepted → completed
-pending → rejected
+accounts/    User model, authentication, and current-user profile
+skills/      Skill model, library, and skill relationships
+community/   Discovery, matching, and public member profiles
+exchanges/   Exchange requests and status transitions
+dashboard/   Authenticated summaries and Matplotlib chart endpoints
+core/        Landing and health/protected utility views
+templates/   Shared layout and server-rendered UI
+static/      Project CSS and progressive-enhancement JavaScript
 ```
 
-Rejected and completed requests are terminal. A deterministic active-request key prevents duplicate pending requests for the same learner, teacher, and skill; it is cleared when a request leaves `pending`, allowing a later request.
+## Requirements and environment
 
-## Dashboard and analytics
-
-Authenticated users can access the central dashboard at `/dashboard/` (`dashboard:index`). It summarizes offered and wanted skills, pending requests, recommended matches, recent received and sent requests, quick actions, and personal activity.
-
-The dashboard includes two authenticated, dynamically generated Matplotlib chart endpoints:
-
-- `/dashboard/charts/skill-demand.png` (`dashboard:skill_demand_chart`) — the five most requested skill categories across the community.
-- `/dashboard/charts/exchange-status.png` (`dashboard:exchange_status_chart`) — the current user's pending, accepted, rejected, and completed requests.
-
-Chart images are generated in memory using Matplotlib's non-GUI `Agg` backend. No chart files are written to the repository, `static/`, or `media/`. Both the dashboard and chart endpoints require a logged-in session.
-
-## Stage 2 data layer
-
-- `Skill` stores normalized, case-insensitively unique skill names, descriptions, categories, and timestamps.
-- Users have `offered_skills` and `wanted_skills` many-to-many relationships with `Skill`.
-- `Exchange` records teacher, learner, skill, message, status, and timestamps. Valid statuses are `pending`, `accepted`, `rejected`, and `completed`.
-- Exchange services enforce teacher offerings, participant permissions, duplicate pending-request prevention, and the allowed status transitions.
-
-## Demo data
-
-Run the idempotent seed command:
+Install Python dependencies from `requirements.txt`. Copy the safe template and create local values in `.env`:
 
 ```bash
-python manage.py seed_demo_data
-# or
-make seed
+cp .env.example .env
+python -m venv venv
+source venv/bin/activate       # Windows: venv\\Scripts\\activate
+make install
 ```
 
-It creates six demo users, ten skills, and four valid exchanges covering every exchange status. Re-running it does not duplicate those records and does not delete existing data.
+`.env` is ignored by Git. Do not commit real secrets or production database credentials. Important settings include `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, and `DB_PORT`.
+
+## Docker/MySQL setup
+
+The provided Compose file runs MySQL 8.0 with a healthcheck and persistent named volume. The Django development server runs on the host by default and connects to `127.0.0.1:3306`.
+
+```bash
+make mysql-up
+make migrate
+make run
+```
+
+When Django runs inside a container, use `DB_HOST=mysql`. `docker compose down` preserves the named volume; `docker compose down -v` removes local database data and is destructive.
+
+## Migrations, seed data, and tests
+
+```bash
+python manage.py check
+python manage.py makemigrations --check
+python manage.py migrate
+python manage.py test
+python manage.py collectstatic --noinput
+python manage.py seed_demo_data
+```
+
+The `seed_demo_data` command is idempotent. It creates six demo users, ten skills, and valid exchanges covering every status without deleting existing data.
 
 Development-only demo credentials:
 
@@ -95,66 +85,57 @@ Development-only demo credentials:
 
 These credentials are for local development only. Change or remove them before using any non-development environment.
 
-## Prerequisites
-- Python 3.12+
-- Docker Desktop
-- Docker Compose
+## Main routes
 
-## Setup Instructions
+Authentication and profile:
 
-1. **Create and activate a virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
-   ```
+- `/accounts/register/` — registration (`accounts:register`)
+- `/accounts/login/` — email login (`accounts:login`)
+- `/accounts/logout/` — CSRF-protected POST logout (`accounts:logout`)
+- `/accounts/profile/` — authenticated profile (`accounts:profile`)
 
-2. **Configure environment variables:**
-   Copy the example environment file and adjust if necessary.
-   ```bash
-   cp .env.example .env
-   ```
+Skills and community:
 
-3. **Install dependencies and setup database:**
-   Run the setup command which installs Python packages, starts MySQL via Docker, runs database migrations, and performs system checks.
-   ```bash
-   make setup
-   ```
+- `/skills/` — public skill library (`skills:list`)
+- `/skills/create/` — authenticated skill creation (`skills:create`)
+- `/discover/` — member discovery (`community:discover`)
+- `/discover/matches/` — authenticated recommendations (`community:matches`)
+- `/members/<id>/` — public member profile (`community:member_detail`)
 
-4. **Create a superuser:**
-   ```bash
-   make superuser
-   ```
+Exchanges:
 
-5. **Start the development server:**
-   ```bash
-   make run
-   ```
-   Visit `http://127.0.0.1:8000/health/` to verify the application is running.
+- `/exchanges/` — sent and received requests (`exchanges:list`)
+- `/exchanges/create/` — request creation (`exchanges:create`)
+- `/exchanges/<id>/` — participant-only detail (`exchanges:detail`)
+- `/exchanges/<id>/accept/`, `/reject/`, `/complete/` — protected transitions
 
-## Development Commands
+Dashboard and analytics:
 
-We provide a `Makefile` with common commands:
+- `/dashboard/` — authenticated dashboard (`dashboard:index`)
+- `/dashboard/charts/skill-demand.png` — private skill-demand chart
+- `/dashboard/charts/exchange-status.png` — private exchange-status chart
 
-- `make install`: Install dependencies from `requirements.txt`.
-- `make mysql-up`: Start the MySQL container in the background.
-- `make mysql-down`: Stop the MySQL container.
-- `make mysql-logs`: View the MySQL container logs.
-- `make mysql-status`: View the status of the Docker compose services.
-- `make migrate`: Apply database migrations.
-- `make makemigrations`: Generate new database migrations.
-- `make check`: Run Django system checks.
-- `make test`: Run the test suite.
-- `make shell`: Open the Django interactive shell.
-- `make superuser`: Create a new superuser.
-- `make run`: Start the Django development server.
-- `make setup`: Install dependencies, start MySQL, run migrations, and check the project.
-- `make down`: Stop MySQL without deleting the volume.
+The chart endpoints require an authenticated session, return `image/png`, and generate figures in memory. Generated chart files are not stored in the repository, `static/`, or `media/`.
 
-## Database Management
+## Authentication and security
 
-- Django runs on `127.0.0.1:8000` (on the host).
-- MySQL runs on `127.0.0.1:3306` (in Docker).
-- When Django is running on the host, `DB_HOST=127.0.0.1` connects to the exposed Docker port.
-- When Django is running inside Docker (via the provided Dockerfile in later stages), `DB_HOST=mysql` would be used instead.
-- **Note:** `docker compose down` or `make mysql-down` simply stops and removes the container, but **preserves** the named database volume.
-- **Warning:** Running `docker compose down -v` is **destructive** because it deletes the database volume and therefore destroys all local database data.
+Django manages password hashing, sessions, authentication cookies, middleware, and CSRF protection. Email addresses are normalized by the registration form, passwords are never displayed or stored in plaintext, and protected views use Django authentication decorators. Exchange permissions are rechecked in the service layer with transaction locking; a user can only act on their own requests or requests where they are the teacher.
+
+Public member profiles intentionally expose only name, bio, member-since date, initials, and skill relationships. Email, password data, permissions, and session details remain private.
+
+## Static and media handling
+
+Project assets live under `static/`. Bootstrap, Bootstrap Icons, and jQuery remain centralized in `templates/base.html` and are loaded from explicit CDN versions. Matplotlib charts are generated in memory and are not static or media files. No profile-image upload feature is enabled in this MVP.
+
+## Useful Make targets
+
+```text
+make install
+make mysql-up
+make migrate
+make makemigrations
+make check
+make test
+make seed
+make run
+```
