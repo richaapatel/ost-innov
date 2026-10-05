@@ -4,6 +4,8 @@ from django.urls import reverse
 
 from skills.models import Skill
 
+from .services import get_match_results
+
 
 User = get_user_model()
 
@@ -119,3 +121,77 @@ class MemberDetailTests(CommunityTestDataMixin, TestCase):
         response = self.client.get(reverse('community:member_detail', args=[self.member.pk]))
         self.assertContains(response, 'Edit Profile')
         self.assertNotContains(response, 'Request to Learn')
+
+
+class MatchingTests(CommunityTestDataMixin, TestCase):
+    def setUp(self):
+        self.python = Skill.objects.create(name='Python')
+        self.design = Skill.objects.create(name='Design')
+        self.spanish = Skill.objects.create(name='Spanish')
+        self.current = self.create_member('match-current@example.com', 'Current Member')
+        self.current.offered_skills.add(self.python)
+        self.current.wanted_skills.add(self.design, self.spanish)
+
+    def test_match_overlap_score_and_two_way_state(self):
+        candidate = self.create_member('match-alice@example.com', 'Alice Match')
+        candidate.offered_skills.add(self.design, self.spanish)
+        candidate.wanted_skills.add(self.python)
+
+        results = get_match_results(self.current)
+
+        self.assertEqual(len(results), 1)
+        match = results[0]
+        self.assertEqual(match['skills_you_want'], [self.design, self.spanish])
+        self.assertEqual(match['skills_they_want'], [self.python])
+        self.assertEqual(match['score'], 3)
+        self.assertTrue(match['is_two_way_match'])
+
+    def test_one_way_and_unrelated_candidates(self):
+        one_way = self.create_member('match-one-way@example.com', 'One Way')
+        one_way.offered_skills.add(self.design)
+        unrelated = self.create_member('match-unrelated@example.com', 'Unrelated')
+        unrelated.offered_skills.add(self.python)
+
+        results = get_match_results(self.current)
+
+        self.assertEqual([item['candidate'] for item in results], [one_way])
+        self.assertFalse(results[0]['is_two_way_match'])
+
+    def test_current_user_is_excluded_and_scores_sort_with_name_tie_break(self):
+        zed = self.create_member('match-zed@example.com', 'Zed')
+        amy = self.create_member('match-amy@example.com', 'Amy')
+        zed.offered_skills.add(self.design)
+        amy.offered_skills.add(self.design)
+
+        results = get_match_results(self.current)
+
+        self.assertEqual([item['candidate'].name for item in results], ['Amy', 'Zed'])
+        self.assertNotIn(self.current, [item['candidate'] for item in results])
+
+    def test_wanted_skill_filter_only_accepts_current_users_wanted_skill(self):
+        candidate = self.create_member('match-filter@example.com', 'Filtered Candidate')
+        candidate.offered_skills.add(self.design, self.spanish)
+
+        results = get_match_results(self.current, skill_id=self.design.pk)
+        self.assertEqual(results[0]['skills_you_want'], [self.design])
+        self.assertEqual(results[0]['score'], 1)
+        self.assertTrue(get_match_results(self.current, skill_id=self.python.pk).invalid_skill)
+
+    def test_no_wanted_skills_is_an_intentional_empty_state(self):
+        self.current.wanted_skills.clear()
+        results = get_match_results(self.current)
+        self.assertEqual(list(results), [])
+        self.assertTrue(results.no_wanted_skills)
+
+    def test_matches_page_requires_authentication(self):
+        response = self.client.get(reverse('community:matches'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('accounts:login'), response.url)
+
+    def test_matches_page_hides_private_fields(self):
+        self.client.force_login(self.current)
+        candidate = self.create_member('private-match@example.com', 'Private Candidate')
+        candidate.offered_skills.add(self.design)
+        response = self.client.get(reverse('community:matches'))
+        self.assertContains(response, 'Private Candidate')
+        self.assertNotContains(response, 'private-match@example.com')

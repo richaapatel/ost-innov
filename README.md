@@ -1,6 +1,6 @@
-# SkillSwap Stage 3
+# SkillSwap
 
-This repository contains the foundational setup for SkillSwap, the Stage 2 data layer, and the Stage 3 authentication experience. It provides a Django backend configured with a custom email-based User model, MySQL in Docker, skills and exchange data integrity, and session-based authentication. Later discovery, matching, exchange UI, dashboard, and analytics functionality are not implemented yet.
+This repository contains the SkillSwap Django application: a custom email-based User model, MySQL-backed skills and exchanges, session authentication, profiles, a skill library, community discovery, matching recommendations, and the exchange workflow. Dashboard analytics are not implemented yet.
 
 ## Stage 3 authentication
 
@@ -29,6 +29,34 @@ Example discovery URL:
 ```text
 /discover/?search=python&offered_skill=3&wanted_skill=7
 ```
+
+## Matching
+
+Authenticated users can visit `/discover/matches/` (`community:matches`). A candidate must offer at least one skill the current user wants to learn. The match score is the number of shared learning opportunities in both directions:
+
+- Skills you want that they offer.
+- Skills they want that you offer.
+
+Results are sorted by score descending, then member name alphabetically. A match is labelled “Two-way match” only when both overlap sets are non-empty. The optional `?skill=<id>` filter is limited to skills currently in the user's wanted-skills list. Users without wanted skills receive an intentional prompt to add learning goals in the Skill Library.
+
+## Exchange requests
+
+Authenticated users can request to learn from another member through the reusable Request to Learn flow, or use the server-rendered fallback at `/exchanges/create/`. The selected skill list is restricted to the teacher's current offered skills and all relationships are rechecked server-side.
+
+- Exchange list: `/exchanges/` (`exchanges:list`)
+- Exchange detail: `/exchanges/<id>/` (`exchanges:detail`)
+- Requests are visible to the teacher as Received Requests and to the learner as Sent Requests.
+- Only the teacher can accept or reject a pending request.
+- Either participant can complete an accepted request.
+
+The state machine is:
+
+```text
+pending → accepted → completed
+pending → rejected
+```
+
+Rejected and completed requests are terminal. A deterministic active-request key prevents duplicate pending requests for the same learner, teacher, and skill; it is cleared when a request leaves `pending`, allowing a later request.
 
 ## Stage 2 data layer
 

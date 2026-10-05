@@ -1,0 +1,33 @@
+<article class="match-card card border-0 shadow-sm h-100">
+    <div class="card-body p-4 d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div class="d-flex align-items-center gap-3 min-w-0">
+                <div class="profile-avatar profile-avatar-small flex-shrink-0">{{ match.candidate.initials }}</div>
+                <div class="min-w-0">
+                    <h2 class="h5 fw-bold text-truncate mb-1">{{ match.candidate.name }}</h2>
+                    <span class="small text-secondary">{{ match.score }} shared skill{{ match.score|pluralize }}</span>
+                </div>
+            </div>
+            <div class="match-score" aria-label="Match score {{ match.score }}">{{ match.score }}</div>
+        </div>
+        <div class="match-type mb-3"><i class="bi bi-stars me-1"></i>{% if match.is_two_way_match %}Two-way match{% else %}Shared learning interest{% endif %}</div>
+        <p class="small text-secondary match-card-bio mb-4">{% if match.candidate_bio %}{{ match.candidate_bio }}{% else %}Open to learning and sharing with the community.{% endif %}</p>
+
+        <div class="match-overlap mb-3">
+            <div class="match-overlap-title">Skills you want that they offer</div>
+            <div class="d-flex flex-wrap gap-1">
+                {% for skill in match.skills_you_want %}{% include 'includes/skill_badge.html' with skill=skill badge_class='skill-badge-match' %}{% endfor %}
+            </div>
+        </div>
+        <div class="match-overlap mb-4">
+            <div class="match-overlap-title">Skills they want that you offer</div>
+            <div class="d-flex flex-wrap gap-1">
+                {% for skill in match.skills_they_want %}{% include 'includes/skill_badge.html' with skill=skill badge_class='skill-badge-match-accent' %}{% empty %}<span class="small text-secondary">One-way learning opportunity</span>{% endfor %}
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-auto">
+            <a href="{% url 'community:member_detail' match.candidate.pk %}" class="btn btn-outline-primary flex-grow-1">View profile</a>
+            <a href="{% url 'exchanges:create' %}?teacher_id={{ match.candidate.pk }}" class="btn btn-primary flex-grow-1" data-request-to-learn data-preferred-skill="{% if match.skills_you_want %}{{ match.skills_you_want.0.pk }}{% endif %}" data-teacher-id="{{ match.candidate.pk }}" data-teacher-name="{{ match.candidate.name }}" data-skills="{{ match.candidate.request_skills_json }}"><i class="bi bi-chat-heart me-1"></i>Request to Learn</a>
+        </div>
+    </div>
+</article>

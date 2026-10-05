@@ -1,0 +1,31 @@
+<article class="exchange-card card border-0 shadow-sm h-100">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <span class="page-eyebrow">{% if mode == 'received' %}Incoming request{% else %}Learning request{% endif %}</span>
+                <h2 class="h5 fw-bold mt-1 mb-0">{{ exchange.skill.name }}</h2>
+            </div>
+            {% include 'includes/status_badge.html' with status=exchange.status %}
+        </div>
+        <p class="small text-secondary mb-2">
+            {% if mode == 'received' %}From <strong>{{ exchange.learner.name }}</strong>{% else %}To <strong>{{ exchange.teacher.name }}</strong>{% endif %}
+        </p>
+        {% if exchange.message %}<p class="exchange-message mb-3">“{{ exchange.message }}”</p>{% endif %}
+        <p class="small text-secondary mb-4"><i class="bi bi-calendar3 me-1"></i>{{ exchange.created_at|date:'M j, Y · g:i A' }}</p>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'exchanges:detail' exchange.pk %}" class="btn btn-sm btn-outline-primary">View details</a>
+            {% if exchange.status == 'pending' and mode == 'received' %}
+                <form method="post" action="{% url 'exchanges:accept' exchange.pk %}" data-exchange-status-form>
+                    {% csrf_token %}<button class="btn btn-sm btn-primary" type="submit">Accept</button>
+                </form>
+                <form method="post" action="{% url 'exchanges:reject' exchange.pk %}" data-exchange-status-form>
+                    {% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">Reject</button>
+                </form>
+            {% elif exchange.status == 'accepted' %}
+                <form method="post" action="{% url 'exchanges:complete' exchange.pk %}" data-exchange-status-form>
+                    {% csrf_token %}<button class="btn btn-sm btn-accent" type="submit">Mark complete</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</article>

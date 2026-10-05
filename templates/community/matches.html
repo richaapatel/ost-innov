@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Matches — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="matches-page py-4 py-lg-5">
+    <div class="container">
+        <div class="matches-hero mb-4">
+            <span class="page-eyebrow"><i class="bi bi-stars me-1"></i>Personalized for you</span>
+            <h1 class="display-6 fw-bold mt-2 mb-2">Your skill matches</h1>
+            <p class="lead text-secondary mb-0">People who can teach what you want to learn — and may want to learn from you too.</p>
+        </div>
+        <div class="discover-filter-card card border-0 shadow-sm p-3 p-md-4 mb-4">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-8 col-lg-6">
+                    <label for="id_match_skill" class="form-label">Show matches for a wanted skill</label>
+                    <select name="skill" id="id_match_skill" class="form-select{% if form.skill.errors %} is-invalid{% endif %}">
+                        <option value="">All skills I want to learn</option>
+                        {% for skill in form.fields.skill.queryset %}<option value="{{ skill.pk }}" {% if form.skill.value|stringformat:'s' == skill.pk|stringformat:'s' %}selected{% endif %}>{{ skill.name }}</option>{% endfor %}
+                    </select>
+                    {% for error in form.skill.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-auto"><button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Filter matches</button></div>
+                {% if request.GET.skill %}<div class="col-auto"><a href="{% url 'community:matches' %}" class="btn btn-light border">Clear</a></div>{% endif %}
+            </form>
+        </div>
+
+        {% if no_wanted_skills %}
+            <div class="app-empty-state py-5">
+                <i class="bi bi-compass"></i>
+                <h2 class="h4 fw-bold mt-3">Your next connection starts with a learning goal.</h2>
+                <p class="text-secondary mb-3">Add skills you want to learn to start receiving recommendations.</p>
+                <a href="{% url 'skills:list' %}" class="btn btn-primary">Explore skills</a>
+            </div>
+        {% else %}
+            <div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 fw-bold mb-0">Recommended people</h2><span class="small text-secondary">{{ page_obj.paginator.count }} match{{ page_obj.paginator.count|pluralize }}</span></div>
+            <div class="row g-4">
+                {% for match in matches %}<div class="col-lg-6">{% include 'includes/match_card.html' with match=match %}</div>{% empty %}<div class="col-12"><div class="app-empty-state py-5"><i class="bi bi-search"></i><h2 class="h5 fw-bold mt-3">No matches yet.</h2><p class="text-secondary mb-0">Try another wanted skill or add more learning goals in the Skill Library.</p></div></div>{% endfor %}
+            </div>
+            {% include 'includes/pagination.html' with page_obj=page_obj query_string=query_string %}
+        {% endif %}
+    </div>
+</section>
+{% include 'includes/exchange_request_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/exchanges.js' %}"></script>{% endblock %}

@@ -74,8 +74,10 @@
         {% include 'includes/pagination.html' with page_obj=page_obj query_string=query_string %}
     </div>
 </section>
+{% if user.is_authenticated %}{% include 'includes/exchange_request_modal.html' %}{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/discover.js' %}"></script>
+<script src="{% static 'js/exchanges.js' %}"></script>
 {% endblock %}

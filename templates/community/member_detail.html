@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ member.name }} — SkillSwap{% endblock %}
 
@@ -24,8 +25,12 @@
                     {% if is_self %}
                         <a href="{% url 'accounts:profile' %}" class="btn btn-primary px-4"><i class="bi bi-pencil me-1"></i>Edit Profile</a>
                     {% elif user.is_authenticated %}
-                        <button type="button" class="btn btn-primary px-4" disabled title="Exchange requests will be available in a later stage."><i class="bi bi-chat-heart me-1"></i>Request to Learn</button>
-                        <div class="small text-secondary mt-2 text-lg-end">Exchange requests coming soon.</div>
+                        <a href="{% url 'exchanges:create' %}?teacher_id={{ member.pk }}" class="btn btn-primary px-4" data-request-to-learn
+                                data-teacher-id="{{ member.pk }}"
+                                data-teacher-name="{{ member.name }}"
+                                data-skills="{{ member.request_skills_json }}">
+                            <i class="bi bi-chat-heart me-1"></i>Request to Learn
+                        </a>
                     {% else %}
                         <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary px-4"><i class="bi bi-box-arrow-in-right me-1"></i>Log in to request learning</a>
                     {% endif %}
@@ -77,4 +82,13 @@
         </div>
     </div>
 </section>
+{% if user.is_authenticated and not is_self %}
+    {% include 'includes/exchange_request_modal.html' %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if user.is_authenticated and not is_self %}
+<script src="{% static 'js/exchanges.js' %}"></script>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Exchanges — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="exchanges-page py-4 py-lg-5">
+    <div class="container">
+        <span class="page-eyebrow"><i class="bi bi-arrow-left-right me-1"></i>Your learning circle</span>
+        <h1 class="display-6 fw-bold mt-2 mb-2">Exchanges</h1>
+        <p class="lead text-secondary mb-4">Keep track of requests you receive and the skills you are excited to learn.</p>
+        <ul class="nav nav-tabs exchange-tabs mb-4" role="tablist">
+            <li class="nav-item"><a class="nav-link {% if active_tab != 'sent' %}active{% endif %}" href="?tab=received">Received Requests <span class="badge rounded-pill text-bg-light ms-1">{{ received_exchanges|length }}</span></a></li>
+            <li class="nav-item"><a class="nav-link {% if active_tab == 'sent' %}active{% endif %}" href="?tab=sent">Sent Requests <span class="badge rounded-pill text-bg-light ms-1">{{ sent_exchanges|length }}</span></a></li>
+        </ul>
+        {% if active_tab == 'sent' %}
+            <div class="row g-4">{% for exchange in sent_exchanges %}<div class="col-lg-6">{% include 'includes/exchange_card.html' with exchange=exchange mode='sent' %}</div>{% empty %}<div class="col-12"><div class="app-empty-state py-5"><i class="bi bi-send"></i><h2 class="h5 fw-bold mt-3">No sent requests yet.</h2><p class="text-secondary mb-0">Find a skill you want to learn and start a conversation.</p></div></div>{% endfor %}</div>
+        {% else %}
+            <div class="row g-4">{% for exchange in received_exchanges %}<div class="col-lg-6">{% include 'includes/exchange_card.html' with exchange=exchange mode='received' %}</div>{% empty %}<div class="col-12"><div class="app-empty-state py-5"><i class="bi bi-inbox"></i><h2 class="h5 fw-bold mt-3">No received requests yet.</h2><p class="text-secondary mb-0">Your next learning connection will appear here.</p></div></div>{% endfor %}</div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/exchanges.js' %}"></script>{% endblock %}

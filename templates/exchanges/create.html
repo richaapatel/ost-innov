@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block title %}Request to Learn — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="py-5"><div class="container narrow-container"><div class="card border-0 shadow-sm"><div class="card-body p-4 p-md-5"><span class="page-eyebrow">Skill exchange</span><h1 class="h3 fw-bold mt-2">Request to Learn{% if teacher %} from {{ teacher.name }}{% endif %}</h1><p class="text-secondary">Choose one of their currently offered skills and add a short note.</p><form method="post" action="{% url 'exchanges:create' %}">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<div class="mb-3">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>{% endfor %}<button class="btn btn-primary" type="submit">Send request</button></form></div></div></div></section>
+{% endblock %}

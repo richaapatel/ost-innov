@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Exchange {{ exchange.pk }} — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="exchange-detail-page py-4 py-lg-5">
+    <div class="container narrow-container">
+        <a href="{% url 'exchanges:list' %}" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Back to exchanges</a>
+        <div class="exchange-detail-card card border-0 shadow-sm mt-3">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4"><div><span class="page-eyebrow">Skill exchange</span><h1 class="h2 fw-bold mt-2 mb-0">{{ exchange.skill.name }}</h1></div>{% include 'includes/status_badge.html' with status=exchange.status %}</div>
+                <div class="row g-4 mb-4"><div class="col-md-6"><div class="detail-label">Teacher</div><div class="detail-value">{{ exchange.teacher.name }}</div></div><div class="col-md-6"><div class="detail-label">Learner</div><div class="detail-value">{{ exchange.learner.name }}</div></div><div class="col-md-6"><div class="detail-label">Requested</div><div class="detail-value">{{ exchange.created_at|date:'F j, Y · g:i A' }}</div></div><div class="col-md-6"><div class="detail-label">Last updated</div><div class="detail-value">{{ exchange.updated_at|date:'F j, Y · g:i A' }}</div></div></div>
+                {% if exchange.message %}<div class="exchange-detail-message mb-4"><div class="detail-label mb-2">Message</div><p class="mb-0">{{ exchange.message }}</p></div>{% endif %}
+                <div class="d-flex flex-wrap gap-2">
+                    {% if exchange.status == 'pending' and request.user.pk == exchange.teacher_id %}<form method="post" action="{% url 'exchanges:accept' exchange.pk %}" data-exchange-status-form>{% csrf_token %}<button class="btn btn-primary" type="submit">Accept request</button></form><form method="post" action="{% url 'exchanges:reject' exchange.pk %}" data-exchange-status-form>{% csrf_token %}<button class="btn btn-outline-danger" type="submit">Reject request</button></form>{% elif exchange.status == 'accepted' %}<form method="post" action="{% url 'exchanges:complete' exchange.pk %}" data-exchange-status-form>{% csrf_token %}<button class="btn btn-accent" type="submit">Mark exchange complete</button></form>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/exchanges.js' %}"></script>{% endblock %}

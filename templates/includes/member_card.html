@@ -33,6 +33,18 @@
             </div>
         </div>
 
-        <a href="{% url 'community:member_detail' member.pk %}" class="btn btn-outline-primary w-100 mt-auto">View profile <i class="bi bi-arrow-right ms-1"></i></a>
+        <div class="d-grid gap-2 mt-auto">
+            <a href="{% url 'community:member_detail' member.pk %}" class="btn btn-outline-primary">View profile <i class="bi bi-arrow-right ms-1"></i></a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'exchanges:create' %}?teacher_id={{ member.pk }}" class="btn btn-primary" data-request-to-learn
+                        data-teacher-id="{{ member.pk }}"
+                        data-teacher-name="{{ member.name }}"
+                        data-skills="{{ member.request_skills_json }}">
+                    <i class="bi bi-chat-heart me-1"></i>Request to Learn
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}" class="btn btn-light border">Log in to request</a>
+            {% endif %}
+        </div>
     </div>
 </article>

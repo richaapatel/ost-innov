@@ -1,0 +1,38 @@
+<div class="modal fade" id="exchangeRequestModal" tabindex="-1" aria-labelledby="exchangeRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content exchange-modal border-0">
+            <div class="modal-header border-0 p-4 pb-2">
+                <div>
+                    <span class="page-eyebrow">Start a skill exchange</span>
+                    <h2 class="modal-title h4 fw-bold mt-1" id="exchangeRequestModalLabel">Request to Learn</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'exchanges:create' %}" id="exchange-request-form" novalidate>
+                {% csrf_token %}
+                <div class="modal-body px-4 pt-2">
+                    <p class="text-secondary mb-4">Choose one of their offered skills and add a short note.</p>
+                    <div id="exchange-request-general-error" class="alert alert-danger d-none" role="alert"></div>
+                    <div id="exchange-request-success" class="alert alert-success d-none" role="status"></div>
+                    <input type="hidden" name="teacher_id" id="exchange-teacher-id">
+                    <div class="mb-3">
+                        <label for="exchange-skill-id" class="form-label">Skill you want to learn</label>
+                        <select class="form-select" name="skill_id" id="exchange-skill-id" required>
+                            <option value="">Choose a skill</option>
+                        </select>
+                        <div class="invalid-feedback" id="exchange-skill-error"></div>
+                    </div>
+                    <div class="mb-2">
+                        <label for="exchange-message" class="form-label">Message <span class="text-secondary fw-normal">(optional)</span></label>
+                        <textarea class="form-control" name="message" id="exchange-message" rows="4" maxlength="500" placeholder="Tell them what you would like to learn..."></textarea>
+                        <div class="d-flex justify-content-between mt-1"><div class="invalid-feedback" id="exchange-message-error"></div><small class="text-secondary" id="exchange-message-count">0 / 500</small></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="exchange-request-submit"><span class="exchange-submit-label"><i class="bi bi-send me-1"></i>Send request</span><span class="exchange-submit-loading d-none"><span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Sending...</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

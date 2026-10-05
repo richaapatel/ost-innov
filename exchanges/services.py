@@ -17,6 +17,17 @@ def create_exchange_request(*, learner: User, teacher_id: int, skill_id: int, me
     """Create one pending request after rechecking all participant relationships."""
     if not getattr(learner, 'pk', None):
         raise ExchangeServiceError('A saved learner is required.')
+    message = (message or '').strip()
+    if len(message) > 500:
+        raise ExchangeServiceError('Message cannot exceed 500 characters.')
+    try:
+        teacher_id = int(teacher_id)
+    except (TypeError, ValueError) as exc:
+        raise ExchangeServiceError('The selected teacher does not exist.') from exc
+    try:
+        skill_id = int(skill_id)
+    except (TypeError, ValueError) as exc:
+        raise ExchangeServiceError('The selected skill does not exist.') from exc
 
     try:
         with transaction.atomic():

@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import Client, TestCase
+from django.urls import reverse
 
 from skills.models import Skill
 
@@ -114,3 +115,149 @@ class ExchangeTests(TestCase):
         second = self.request()
         self.assertNotEqual(first.pk, second.pk)
         self.assertEqual(second.status, Exchange.Status.PENDING)
+
+
+class ExchangeWorkflowTests(TestCase):
+    def setUp(self):
+        self.teacher = User.objects.create_user(
+            email='workflow-teacher@example.com', password='StrongPass9!', name='Teacher One'
+        )
+        self.learner = User.objects.create_user(
+            email='workflow-learner@example.com', password='StrongPass9!', name='Learner One'
+        )
+        self.third_party = User.objects.create_user(
+            email='workflow-third@example.com', password='StrongPass9!', name='Third Party'
+        )
+        self.skill = Skill.objects.create(name='Workflow Python')
+        self.teacher.offered_skills.add(self.skill)
+
+    def _payload(self, **overrides):
+        payload = {
+            'teacher_id': self.teacher.pk,
+            'skill_id': self.skill.pk,
+            'message': 'I would love to learn this.',
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_ajax_creation_returns_expected_success_shape(self):
+        self.client.force_login(self.learner)
+        response = self.client.post(
+            reverse('exchanges:create'),
+            self._payload(),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body['ok'])
+        self.assertEqual(body['data']['status'], Exchange.Status.PENDING)
+        self.assertEqual(body['data']['skill'], self.skill.name)
+
+    def test_duplicate_ajax_creation_returns_conflict_shape(self):
+        create_exchange_request(
+            learner=self.learner,
+            teacher_id=self.teacher.pk,
+            skill_id=self.skill.pk,
+        )
+        self.client.force_login(self.learner)
+        response = self.client.post(
+            reverse('exchanges:create'),
+            self._payload(),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertFalse(response.json()['ok'])
+        self.assertIn('errors', response.json())
+
+    def test_ajax_validation_error_is_structured(self):
+        self.client.force_login(self.learner)
+        response = self.client.post(
+            reverse('exchanges:create'),
+            self._payload(skill_id=999999),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()['ok'])
+        self.assertIn('skill_id', response.json()['errors'])
+
+    def test_creation_uses_authenticated_learner_and_csrf(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.learner)
+        response = client.post(reverse('exchanges:create'), self._payload())
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Exchange.objects.exists())
+
+    def test_sent_and_received_lists_show_the_exchange(self):
+        exchange = create_exchange_request(
+            learner=self.learner,
+            teacher_id=self.teacher.pk,
+            skill_id=self.skill.pk,
+        )
+        self.client.force_login(self.learner)
+        sent = self.client.get(reverse('exchanges:list'), {'tab': 'sent'})
+        self.assertContains(sent, self.teacher.name)
+        self.assertContains(sent, exchange.skill.name)
+
+        self.client.force_login(self.teacher)
+        received = self.client.get(reverse('exchanges:list'))
+        self.assertContains(received, self.learner.name)
+
+    def test_detail_is_private_to_participants(self):
+        exchange = create_exchange_request(
+            learner=self.learner,
+            teacher_id=self.teacher.pk,
+            skill_id=self.skill.pk,
+        )
+        self.client.force_login(self.third_party)
+        response = self.client.get(reverse('exchanges:detail', args=[exchange.pk]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_teacher_can_accept_and_learner_can_complete_via_views(self):
+        exchange = create_exchange_request(
+            learner=self.learner,
+            teacher_id=self.teacher.pk,
+            skill_id=self.skill.pk,
+        )
+        self.client.force_login(self.learner)
+        denied = self.client.post(reverse('exchanges:accept', args=[exchange.pk]))
+        self.assertEqual(denied.status_code, 302)
+        exchange.refresh_from_db()
+        self.assertEqual(exchange.status, Exchange.Status.PENDING)
+
+        self.client.force_login(self.teacher)
+        accepted = self.client.post(reverse('exchanges:accept', args=[exchange.pk]))
+        self.assertEqual(accepted.status_code, 302)
+        exchange.refresh_from_db()
+        self.assertEqual(exchange.status, Exchange.Status.ACCEPTED)
+        self.assertIsNone(exchange.active_request_key)
+
+        self.client.force_login(self.learner)
+        completed = self.client.post(reverse('exchanges:complete', args=[exchange.pk]))
+        self.assertEqual(completed.status_code, 302)
+        exchange.refresh_from_db()
+        self.assertEqual(exchange.status, Exchange.Status.COMPLETED)
+
+    def test_rejected_and_completed_requests_cannot_transition(self):
+        rejected = create_exchange_request(
+            learner=self.learner,
+            teacher_id=self.teacher.pk,
+            skill_id=self.skill.pk,
+        )
+        change_exchange_status(exchange=rejected, actor=self.teacher, action='reject')
+        self.client.force_login(self.teacher)
+        response = self.client.post(reverse('exchanges:accept', args=[rejected.pk]))
+        self.assertEqual(response.status_code, 302)
+        rejected.refresh_from_db()
+        self.assertEqual(rejected.status, Exchange.Status.REJECTED)
+
+        completed = create_exchange_request(
+            learner=self.learner,
+            teacher_id=self.teacher.pk,
+            skill_id=self.skill.pk,
+        )
+        change_exchange_status(exchange=completed, actor=self.teacher, action='accept')
+        change_exchange_status(exchange=completed, actor=self.teacher, action='complete')
+        response = self.client.post(reverse('exchanges:reject', args=[completed.pk]))
+        self.assertEqual(response.status_code, 302)
+        completed.refresh_from_db()
+        self.assertEqual(completed.status, Exchange.Status.COMPLETED)
