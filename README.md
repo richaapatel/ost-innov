@@ -1,6 +1,17 @@
-# SkillSwap Stage 2
+# SkillSwap Stage 3
 
-This repository contains the foundational setup for SkillSwap plus the Stage 2 data layer. It provides a Django backend configured with a custom User model, MySQL in Docker, skills and user skill relationships, and exchange request integrity services. Stage 3 UI and discovery functionality are not implemented yet.
+This repository contains the foundational setup for SkillSwap, the Stage 2 data layer, and the Stage 3 authentication experience. It provides a Django backend configured with a custom email-based User model, MySQL in Docker, skills and exchange data integrity, and session-based authentication. Later discovery, matching, exchange UI, dashboard, and analytics functionality are not implemented yet.
+
+## Stage 3 authentication
+
+Authentication uses Django's built-in session system. Users register and log in with their email address, and passwords are hashed with Django's password hashing utilities.
+
+- Registration: `/accounts/register/`
+- Login: `/accounts/login/`
+- Logout: POST `/accounts/logout/`
+- Protected-route example: `/protected/`
+
+Registration requires a full name, a unique email address, and a password from 8–128 characters containing uppercase, lowercase, a number, and a special character. Invalid credentials use a generic error message, inactive users cannot authenticate, and safe `next` redirects are preserved after login. Logout is CSRF-protected and session-based; authentication is not stored in browser storage or application-managed tokens.
 
 ## Stage 2 data layer
 

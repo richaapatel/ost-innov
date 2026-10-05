@@ -4,40 +4,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SkillSwap{% endblock %}</title>
-    <!-- Bootstrap 5 CSS -->
+    <meta name="description" content="SkillSwap — learn something. Teach something.">
+    <title>{% block title %}SkillSwap — Learn something. Teach something.{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/bootstrap-overrides.css' %}">
     <link rel="stylesheet" href="{% static 'css/skillswap.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-light site-navbar">
         <div class="container">
-            <a class="navbar-brand" href="/">SkillSwap</a>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'core:home' %}">
+                <span class="brand-mark"><i class="bi bi-arrow-left-right"></i></span>
+                <span>Skill<span class="brand-accent">Swap</span></span>
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                {% if user.is_authenticated %}
+                    <span class="d-none d-sm-inline small text-secondary">Hi, {{ user.name }}</span>
+                    <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Log out</button>
+                    </form>
+                {% else %}
+                    <a class="btn btn-sm btn-link text-decoration-none" href="{% url 'accounts:login' %}">Log in</a>
+                    <a class="btn btn-sm btn-primary px-3" href="{% url 'accounts:register' %}">Get started</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <div class="container site-messages">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
         {% endif %}
-
-        {% block content %}{% endblock %}
     </div>
 
-    <!-- jQuery -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer py-4 mt-5">
+        <div class="container d-flex flex-column flex-sm-row justify-content-between gap-2 small text-secondary">
+            <span>SkillSwap — learn something. Teach something.</span>
+            <span>Built for curious people.</span>
+        </div>
+    </footer>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
     <script src="{% static 'js/app.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>

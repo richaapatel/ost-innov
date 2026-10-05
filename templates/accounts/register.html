@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Create your account — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="auth-shell py-5 py-lg-6">
+    <div class="container">
+        <div class="row g-4 g-xl-5 align-items-stretch justify-content-center">
+            <div class="col-lg-5 d-flex">
+                <div class="auth-intro w-100 p-4 p-md-5 d-flex flex-column justify-content-between">
+                    <div>
+                        <span class="eyebrow"><i class="bi bi-stars me-2"></i>Welcome to SkillSwap</span>
+                        <h1 class="display-5 fw-bold mt-4 mb-3">Your next skill is closer than you think.</h1>
+                        <p class="lead text-secondary mb-4">Trade knowledge with people who are learning what you already know — and teach what you love.</p>
+                    </div>
+                    <div class="auth-quote mt-4">
+                        <i class="bi bi-quote fs-2 text-primary"></i>
+                        <p class="mb-0 fw-medium">Learn something. Teach something. Grow together.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-xl-5 d-flex">
+                <div class="auth-card card border-0 shadow-sm w-100">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="mb-4">
+                            <span class="section-kicker">Start swapping</span>
+                            <h2 class="h3 fw-bold mt-2 mb-2">Create your account</h2>
+                            <p class="text-secondary mb-0">Join a community built around useful curiosity.</p>
+                        </div>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="id_name" class="form-label">Full name</label>
+                                <input type="text" name="name" id="id_name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" value="{{ form.name.value|default_if_none:'' }}" maxlength="80" autocomplete="name" placeholder="Your full name" required>
+                                {% for error in form.name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_email" class="form-label">Email address</label>
+                                <input type="email" name="email" id="id_email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" value="{{ form.email.value|default_if_none:'' }}" maxlength="254" autocomplete="email" placeholder="you@example.com" required>
+                                {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_password1" class="form-label">Password</label>
+                                <input type="password" name="password1" id="id_password1" class="form-control {% if form.password1.errors %}is-invalid{% endif %}" maxlength="128" autocomplete="new-password" placeholder="Create a strong password" required>
+                                {% for error in form.password1.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="password-guidance mb-3" aria-label="Password requirements">
+                                <p class="small fw-semibold mb-2">Your password needs:</p>
+                                <div class="row g-2 small text-secondary">
+                                    <div class="col-sm-6 password-rule" data-rule="length"><i class="bi bi-check-circle me-1"></i>8–128 characters</div>
+                                    <div class="col-sm-6 password-rule" data-rule="uppercase"><i class="bi bi-check-circle me-1"></i>One uppercase letter</div>
+                                    <div class="col-sm-6 password-rule" data-rule="lowercase"><i class="bi bi-check-circle me-1"></i>One lowercase letter</div>
+                                    <div class="col-sm-6 password-rule" data-rule="number"><i class="bi bi-check-circle me-1"></i>One number</div>
+                                    <div class="col-sm-6 password-rule" data-rule="special"><i class="bi bi-check-circle me-1"></i>One special character</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="id_password2" class="form-label">Confirm password</label>
+                                <input type="password" name="password2" id="id_password2" class="form-control {% if form.password2.errors %}is-invalid{% endif %}" maxlength="128" autocomplete="new-password" placeholder="Repeat your password" required>
+                                {% for error in form.password2.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100 auth-submit">
+                                <span class="button-label">Create account <i class="bi bi-arrow-right ms-1"></i></span>
+                            </button>
+                        </form>
+
+                        <p class="text-center text-secondary small mt-4 mb-0">Already have an account? <a href="{% url 'accounts:login' %}" class="fw-semibold">Log in</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const password = document.getElementById('id_password1');
+        const form = password && password.form;
+        if (!password) return;
+
+        const rules = {
+            length: value => value.length >= 8 && value.length <= 128,
+            uppercase: value => /[A-Z]/.test(value),
+            lowercase: value => /[a-z]/.test(value),
+            number: value => /\d/.test(value),
+            special: value => /[^a-zA-Z0-9]/.test(value)
+        };
+
+        const updateRules = () => {
+            Object.keys(rules).forEach((name) => {
+                const rule = document.querySelector('[data-rule="' + name + '"]');
+                if (rule) rule.classList.toggle('is-met', rules[name](password.value));
+            });
+        };
+
+        password.addEventListener('input', updateRules);
+        updateRules();
+
+        if (form) {
+            form.addEventListener('submit', function () {
+                const button = form.querySelector('.auth-submit');
+                if (button) {
+                    button.disabled = true;
+                    button.setAttribute('aria-busy', 'true');
+                    button.querySelector('.button-label').innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Creating account...';
+                }
+            });
+        }
+    }());
+</script>
+{% endblock %}
