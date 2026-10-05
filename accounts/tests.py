@@ -2,6 +2,11 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
+from django.test import Client
+
+from skills.models import Skill
+
+from .utils import get_user_initials
 
 User = get_user_model()
 
@@ -296,3 +301,164 @@ class LogoutAndProtectedRouteTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {'status': 'authenticated'})
+
+
+class ProfileTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='aryan@example.com',
+            password='StrongPass9!',
+            name='Aryan Patel',
+            bio='I enjoy learning by teaching.',
+        )
+        self.client.force_login(self.user)
+
+    def profile_data(self, **overrides):
+        data = {
+            'name': 'Aryan Patel',
+            'bio': 'I enjoy learning by teaching.',
+        }
+        data.update(overrides)
+        return data
+
+    def test_initials_helper_supports_single_and_multiple_names(self):
+        self.assertEqual(get_user_initials('Aryan Patel'), 'AP')
+        self.assertEqual(get_user_initials('Aryan'), 'A')
+        self.assertEqual(get_user_initials('John Michael Smith'), 'JS')
+
+    def test_anonymous_user_is_redirected_to_login(self):
+        self.client.logout()
+
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('accounts:login')}?next={reverse('accounts:profile')}",
+            fetch_redirect_response=False,
+        )
+
+    def test_authenticated_user_can_access_profile(self):
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/profile.html')
+
+    def test_profile_displays_current_user_information(self):
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertContains(response, 'Aryan Patel')
+        self.assertContains(response, 'aryan@example.com')
+        self.assertContains(response, 'I enjoy learning by teaching.')
+        self.assertContains(response, self.user.created_at.strftime('%B %Y'))
+        self.assertNotContains(response, 'name="email"')
+        self.assertNotContains(response, 'password')
+
+    def test_offered_and_wanted_skills_are_displayed(self):
+        python = Skill.objects.create(name='Python', category='Technology')
+        guitar = Skill.objects.create(name='Guitar', category='Music')
+        self.user.offered_skills.add(python)
+        self.user.wanted_skills.add(guitar)
+
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertContains(response, 'Python')
+        self.assertContains(response, 'Guitar')
+
+    def test_empty_skill_states_are_displayed(self):
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertContains(response, "You haven't added any skills yet.")
+        self.assertContains(response, "You haven't added any learning goals yet.")
+
+    def test_valid_profile_update_changes_name_and_bio(self):
+        response = self.client.post(
+            reverse('accounts:profile'),
+            self.profile_data(name='  Updated Name  ', bio='  A refreshed bio.  '),
+        )
+
+        self.assertRedirects(response, reverse('accounts:profile'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, 'Updated Name')
+        self.assertEqual(self.user.bio, 'A refreshed bio.')
+
+    def test_successful_update_shows_message(self):
+        response = self.client.post(
+            reverse('accounts:profile'),
+            self.profile_data(bio='A new bio.'),
+            follow=True,
+        )
+
+        self.assertContains(response, 'Profile updated successfully.')
+
+    def test_name_cannot_be_empty_or_whitespace(self):
+        response = self.client.post(
+            reverse('accounts:profile'),
+            self.profile_data(name='   '),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('name', response.context['form'].errors)
+
+    def test_name_cannot_exceed_80_characters(self):
+        response = self.client.post(
+            reverse('accounts:profile'),
+            self.profile_data(name='a' * 81),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('name', response.context['form'].errors)
+
+    def test_bio_cannot_exceed_500_characters(self):
+        response = self.client.post(
+            reverse('accounts:profile'),
+            self.profile_data(bio='a' * 501),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('bio', response.context['form'].errors)
+
+    def test_bio_can_be_cleared(self):
+        response = self.client.post(
+            reverse('accounts:profile'),
+            self.profile_data(bio=''),
+        )
+
+        self.assertRedirects(response, reverse('accounts:profile'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.bio, '')
+
+    def test_email_is_not_changed_by_profile_update(self):
+        response = self.client.post(
+            reverse('accounts:profile'),
+            self.profile_data(email='attacker@example.com', name='Still Aryan'),
+        )
+
+        self.assertRedirects(response, reverse('accounts:profile'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'aryan@example.com')
+
+    def test_submitted_user_id_cannot_modify_another_user(self):
+        other = User.objects.create_user(
+            email='other@example.com', password='StrongPass9!', name='Other User', bio='Original bio'
+        )
+
+        response = self.client.post(
+            reverse('accounts:profile'),
+            self.profile_data(user_id=other.pk, name='Only My Profile', bio='Only my bio'),
+        )
+
+        self.assertRedirects(response, reverse('accounts:profile'))
+        other.refresh_from_db()
+        self.assertEqual(other.name, 'Other User')
+        self.assertEqual(other.bio, 'Original bio')
+
+    def test_profile_update_requires_csrf(self):
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(self.user)
+
+        response = csrf_client.post(
+            reverse('accounts:profile'),
+            self.profile_data(name='Blocked Without CSRF'),
+        )
+
+        self.assertEqual(response.status_code, 403)

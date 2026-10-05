@@ -110,3 +110,41 @@ class LoginForm(AuthenticationForm):
         if self.cleaned_data.get('username'):
             self.cleaned_data['username'] = self.cleaned_data['username'].strip().lower()
         return super().clean()
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    name = forms.CharField(
+        label='Full name',
+        max_length=80,
+        strip=True,
+        widget=forms.TextInput(attrs={
+            'autocomplete': 'name',
+            'maxlength': 80,
+            'placeholder': 'Your full name',
+        }),
+    )
+    bio = forms.CharField(
+        label='Bio',
+        max_length=500,
+        required=False,
+        strip=True,
+        widget=forms.Textarea(attrs={
+            'autocomplete': 'off',
+            'maxlength': 500,
+            'placeholder': 'Tell the community a little about yourself...',
+            'rows': 5,
+        }),
+    )
+
+    class Meta:
+        model = User
+        fields = ('name', 'bio')
+
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        if not name:
+            raise forms.ValidationError('Please enter your full name.')
+        return name
+
+    def clean_bio(self):
+        return self.cleaned_data['bio'].strip()

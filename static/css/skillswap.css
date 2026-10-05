@@ -186,6 +186,148 @@ a:hover {
     width: 3.5rem;
 }
 
+.profile-page {
+    min-height: calc(100vh - 132px);
+}
+
+.profile-header-card,
+.profile-section-card {
+    background: var(--ss-surface);
+    border: 1px solid var(--ss-border);
+    border-radius: 1.25rem;
+}
+
+.profile-header-card {
+    background: linear-gradient(135deg, #fff 0%, #f7f9ff 100%);
+    overflow: hidden;
+    position: relative;
+}
+
+.profile-header-card::after {
+    background: var(--ss-accent);
+    border-radius: 50%;
+    content: "";
+    height: 15rem;
+    opacity: .08;
+    position: absolute;
+    right: -6rem;
+    top: -8rem;
+    width: 15rem;
+}
+
+.profile-header-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.profile-avatar {
+    align-items: center;
+    background: linear-gradient(135deg, var(--ss-primary), #6e83f5);
+    border: 5px solid rgba(255, 255, 255, .85);
+    border-radius: 1.5rem;
+    box-shadow: 0 .75rem 1.5rem rgba(67, 97, 238, .22);
+    color: #fff;
+    display: inline-flex;
+    font-size: 2rem;
+    font-weight: 800;
+    height: 6.5rem;
+    justify-content: center;
+    letter-spacing: .04em;
+    width: 6.5rem;
+}
+
+.profile-avatar-small {
+    border-radius: 50%;
+    font-size: 1rem;
+    height: 2.25rem;
+    width: 2.25rem;
+}
+
+.profile-eyebrow {
+    color: var(--ss-primary);
+    font-size: .75rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.profile-name {
+    letter-spacing: -.04em;
+}
+
+.profile-meta {
+    color: var(--ss-muted);
+    font-size: .9rem;
+}
+
+.profile-meta i {
+    color: var(--ss-primary);
+}
+
+.profile-section-card {
+    height: 100%;
+}
+
+.profile-section-title {
+    font-size: 1.05rem;
+    font-weight: 750;
+}
+
+.profile-info-label {
+    color: var(--ss-muted);
+    font-size: .75rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.profile-bio {
+    color: #4d5a70;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.profile-readonly {
+    background: #f8f9fd;
+    color: var(--ss-muted);
+}
+
+.skill-chip {
+    background: rgba(67, 97, 238, .09);
+    border: 1px solid rgba(67, 97, 238, .14);
+    border-radius: 999px;
+    color: var(--ss-primary-dark);
+    display: inline-flex;
+    font-size: .84rem;
+    font-weight: 650;
+    padding: .45rem .75rem;
+}
+
+.skill-chip.skill-chip-accent {
+    background: rgba(6, 214, 160, .1);
+    border-color: rgba(6, 214, 160, .18);
+    color: #087a61;
+}
+
+.profile-empty {
+    background: #f8f9fd;
+    border: 1px dashed #ccd3e1;
+    border-radius: .9rem;
+    color: var(--ss-muted);
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.profile-empty i {
+    color: var(--ss-accent);
+    font-size: 1.4rem;
+}
+
+.profile-counter {
+    color: var(--ss-muted);
+    font-size: .78rem;
+}
+
 .py-lg-6 {
     padding-bottom: 5rem !important;
     padding-top: 5rem !important;
@@ -194,6 +336,12 @@ a:hover {
 @media (max-width: 991.98px) {
     .auth-intro {
         min-height: 20rem;
+    }
+
+    .profile-avatar {
+        border-radius: 1.25rem;
+        height: 5.5rem;
+        width: 5.5rem;
     }
 }
 

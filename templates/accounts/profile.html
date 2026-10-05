@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}My profile — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="profile-page py-4 py-lg-5">
+    <div class="container">
+        <div class="mb-4">
+            <span class="profile-eyebrow"><i class="bi bi-person-circle me-1"></i>Your space</span>
+            <h1 class="h2 fw-bold mt-2 mb-1">My profile</h1>
+            <p class="text-secondary mb-0">Keep your introduction up to date so the right people can find you later.</p>
+        </div>
+
+        <div class="profile-header-card shadow-sm p-4 p-md-5 mb-4">
+            <div class="row align-items-center g-4">
+                <div class="col-auto">
+                    <div class="profile-avatar" aria-label="Initials avatar for {{ profile_user.name }}">{{ initials }}</div>
+                </div>
+                <div class="col">
+                    <span class="profile-eyebrow">SkillSwap member</span>
+                    <h2 class="profile-name h1 fw-bold mt-2 mb-2">{{ profile_user.name }}</h2>
+                    <div class="d-flex flex-column flex-sm-row flex-wrap gap-2 gap-sm-4 profile-meta">
+                        <span><i class="bi bi-envelope me-2"></i>{{ profile_user.email }}</span>
+                        <span><i class="bi bi-calendar3 me-2"></i>Member since {{ profile_user.created_at|date:'F Y' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-5">
+                <div class="profile-section-card shadow-sm p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                        <div>
+                            <span class="profile-eyebrow">About you</span>
+                            <h2 class="profile-section-title mt-2 mb-0">Profile information</h2>
+                        </div>
+                        <i class="bi bi-pencil-square fs-4 text-primary" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="profile-info-label mb-2">Current bio</div>
+                        {% if profile_user.bio %}
+                            <p class="profile-bio mb-0">{{ profile_user.bio }}</p>
+                        {% else %}
+                            <p class="profile-bio text-secondary mb-0">No bio yet. Add a little about what you enjoy learning or teaching.</p>
+                        {% endif %}
+                    </div>
+
+                    <hr class="border-light-subtle mb-4">
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="id_name" class="form-label">Full name</label>
+                            <input type="text" name="name" id="id_name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" value="{{ form.name.value|default_if_none:'' }}" maxlength="80" autocomplete="name" required>
+                            {% for error in form.name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_bio" class="form-label">Bio <span class="text-secondary fw-normal">(optional)</span></label>
+                            <textarea name="bio" id="id_bio" class="form-control {% if form.bio.errors %}is-invalid{% endif %}" maxlength="500" rows="5" placeholder="Tell the community a little about yourself...">{{ form.bio.value|default_if_none:'' }}</textarea>
+                            <div class="d-flex justify-content-between gap-2 mt-1">
+                                {% for error in form.bio.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                <span class="profile-counter ms-auto" data-bio-counter>0/500</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row gap-2 pt-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1 profile-submit">
+                                <span class="profile-submit-label"><i class="bi bi-check2 me-1"></i>Save changes</span>
+                            </button>
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-light border flex-grow-1">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="profile-section-card shadow-sm p-4 p-md-5 h-100">
+                    <div class="mb-4">
+                        <span class="profile-eyebrow">Your learning path</span>
+                        <h2 class="profile-section-title mt-2 mb-1">Skills snapshot</h2>
+                        <p class="text-secondary small mb-0">Your current offerings and interests will help shape future connections.</p>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="brand-mark"><i class="bi bi-lightbulb"></i></span>
+                                <h3 class="h6 fw-bold mb-0">Skills I offer</h3>
+                            </div>
+                            {% if offered_skills %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for skill in offered_skills %}
+                                        <span class="skill-chip">{{ skill.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="profile-empty">
+                                    <i class="bi bi-lightbulb d-block mb-2"></i>
+                                    <span>You haven't added any skills yet.</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="brand-mark"><i class="bi bi-compass"></i></span>
+                                <h3 class="h6 fw-bold mb-0">Skills I want to learn</h3>
+                            </div>
+                            {% if wanted_skills %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for skill in wanted_skills %}
+                                        <span class="skill-chip skill-chip-accent">{{ skill.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="profile-empty">
+                                    <i class="bi bi-compass d-block mb-2"></i>
+                                    <span>You haven't added any learning goals yet.</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const bio = document.getElementById('id_bio');
+        const counter = document.querySelector('[data-bio-counter]');
+        const form = bio && bio.form;
+
+        if (bio && counter) {
+            const updateCounter = function () {
+                counter.textContent = bio.value.length + '/500';
+            };
+            bio.addEventListener('input', updateCounter);
+            updateCounter();
+        }
+
+        if (form) {
+            form.addEventListener('submit', function () {
+                const button = form.querySelector('.profile-submit');
+                if (button) {
+                    button.disabled = true;
+                    button.setAttribute('aria-busy', 'true');
+                    button.querySelector('.profile-submit-label').innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Saving...';
+                }
+            });
+        }
+    }());
+</script>
+{% endblock %}

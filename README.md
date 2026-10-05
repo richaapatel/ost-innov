@@ -13,6 +13,10 @@ Authentication uses Django's built-in session system. Users register and log in 
 
 Registration requires a full name, a unique email address, and a password from 8–128 characters containing uppercase, lowercase, a number, and a special character. Invalid credentials use a generic error message, inactive users cannot authenticate, and safe `next` redirects are preserved after login. Logout is CSRF-protected and session-based; authentication is not stored in browser storage or application-managed tokens.
 
+## Stage 4 profile
+
+Authenticated users can view and edit their current profile at `/profile/` (`accounts:profile`). The profile displays an initials avatar, name, read-only email address, bio, member-since date, and any existing offered or wanted skills. Users can edit only their name and bio; updates are validated server-side, CSRF-protected, and saved through a POST–redirect–GET flow. Anonymous users are redirected to login.
+
 ## Stage 2 data layer
 
 - `Skill` stores normalized, case-insensitively unique skill names, descriptions, categories, and timestamps.

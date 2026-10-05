@@ -1,12 +1,14 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 
-from .forms import LoginForm, RegistrationForm
+from .forms import LoginForm, ProfileUpdateForm, RegistrationForm
+from .utils import get_user_initials
 
 
 def _auth_redirect(request):
@@ -62,3 +64,23 @@ def logout_view(request):
     logout(request)
     messages.info(request, 'You have been logged out.')
     return redirect(settings.LOGOUT_REDIRECT_URL)
+
+
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('accounts:profile')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+
+    return render(request, 'accounts/profile.html', {
+        'form': form,
+        'profile_user': request.user,
+        'initials': get_user_initials(request.user.name),
+        'offered_skills': request.user.offered_skills.all(),
+        'wanted_skills': request.user.wanted_skills.all(),
+    })
