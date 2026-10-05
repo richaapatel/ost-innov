@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Discover People — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="discover-page py-4 py-lg-5">
+    <div class="container">
+        <div class="mb-4">
+            <span class="page-eyebrow"><i class="bi bi-people me-1"></i>The community</span>
+            <h1 class="display-6 fw-bold mt-2 mb-2">Discover people</h1>
+            <p class="lead text-secondary mb-0">Find people whose skills complement what you want to learn.</p>
+        </div>
+
+        <div class="discover-filter-card card border-0 shadow-sm p-3 p-md-4 mb-4">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-lg-5">
+                    <label for="id_discover_search" class="form-label">Search by name</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-primary"></i></span>
+                        <input type="search" name="search" id="id_discover_search" class="form-control{% if form.search.errors %} is-invalid{% endif %}" value="{{ form.search.value|default_if_none:'' }}" placeholder="Search member names" maxlength="80">
+                    </div>
+                    {% for error in form.search.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-5 col-lg-3">
+                    <label for="id_offered_skill" class="form-label">Offers</label>
+                    <select name="offered_skill" id="id_offered_skill" class="form-select{% if form.offered_skill.errors %} is-invalid{% endif %}">
+                        <option value="">Any skill offered</option>
+                        {% for skill in form.fields.offered_skill.queryset %}
+                            <option value="{{ skill.pk }}" {% if form.offered_skill.value|stringformat:'s' == skill.pk|stringformat:'s' %}selected{% endif %}>{{ skill.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.offered_skill.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-5 col-lg-3">
+                    <label for="id_wanted_skill" class="form-label">Wants to learn</label>
+                    <select name="wanted_skill" id="id_wanted_skill" class="form-select{% if form.wanted_skill.errors %} is-invalid{% endif %}">
+                        <option value="">Any skill wanted</option>
+                        {% for skill in form.fields.wanted_skill.queryset %}
+                            <option value="{{ skill.pk }}" {% if form.wanted_skill.value|stringformat:'s' == skill.pk|stringformat:'s' %}selected{% endif %}>{{ skill.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.wanted_skill.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="col-md-2 col-lg-1 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1" aria-label="Apply filters"><i class="bi bi-funnel"></i></button>
+                    {% if request.GET.search or request.GET.offered_skill or request.GET.wanted_skill %}<a href="{% url 'community:discover' %}" class="btn btn-light border" aria-label="Clear filters"><i class="bi bi-x-lg"></i></a>{% endif %}
+                </div>
+            </form>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 fw-bold mb-0">People to meet</h2>
+            <span class="small text-secondary">{{ result_count }} member{{ result_count|pluralize }}</span>
+        </div>
+
+        <div class="row g-4">
+            {% for member in page_obj %}
+                <div class="col-md-6 col-xl-4">
+                    {% include 'includes/member_card.html' with member=member %}
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="app-empty-state py-5">
+                        <i class="bi bi-people"></i>
+                        <h3 class="h5 fw-bold mt-3">No members match those filters.</h3>
+                        <p class="text-secondary mb-3">Try a broader search or explore the whole community.</p>
+                        <a href="{% url 'community:discover' %}" class="btn btn-outline-primary">Clear filters</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% include 'includes/pagination.html' with page_obj=page_obj query_string=query_string %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/discover.js' %}"></script>
+{% endblock %}

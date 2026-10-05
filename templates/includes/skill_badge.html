@@ -1,0 +1,3 @@
+<span class="skill-badge{% if badge_class %} {{ badge_class }}{% endif %}">
+    <i class="bi bi-stars me-1" aria-hidden="true"></i>{{ skill.name }}{% if show_category and skill.category %}<small class="ms-1 opacity-75">· {{ skill.category }}</small>{% endif %}
+</span>

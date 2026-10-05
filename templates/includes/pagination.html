@@ -1,0 +1,17 @@
+{% if page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Community results pages" class="mt-5">
+    <ul class="pagination justify-content-center gap-1">
+        <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
+            {% if page_obj.has_previous %}<a class="page-link rounded-pill" href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% else %}<span class="page-link rounded-pill">Previous</span>{% endif %}
+        </li>
+        {% for number in page_obj.paginator.page_range %}
+            <li class="page-item{% if number == page_obj.number %} active{% endif %}">
+                {% if number == page_obj.number %}<span class="page-link rounded-pill">{{ number }}</span>{% else %}<a class="page-link rounded-pill" href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ number }}">{{ number }}</a>{% endif %}
+            </li>
+        {% endfor %}
+        <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+            {% if page_obj.has_next %}<a class="page-link rounded-pill" href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% else %}<span class="page-link rounded-pill">Next</span>{% endif %}
+        </li>
+    </ul>
+</nav>
+{% endif %}

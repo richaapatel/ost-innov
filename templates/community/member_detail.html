@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ member.name }} — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="member-detail-page py-4 py-lg-5">
+    <div class="container">
+        <a href="{% url 'community:discover' %}" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Back to discover</a>
+
+        <div class="member-hero-card shadow-sm p-4 p-md-5 mt-3 mb-4">
+            <div class="row align-items-center g-4">
+                <div class="col-auto">
+                    <div class="profile-avatar">{{ member.initials }}</div>
+                </div>
+                <div class="col">
+                    <span class="page-eyebrow">Community member</span>
+                    <h1 class="display-6 fw-bold mt-2 mb-2">{{ member.name }}</h1>
+                    <p class="member-detail-bio mb-3">{% if member.bio %}{{ member.bio }}{% else %}This member is ready to learn and share with the community.{% endif %}</p>
+                    <div class="d-flex flex-wrap gap-3 small text-secondary">
+                        <span><i class="bi bi-calendar3 text-primary me-1"></i>Member since {{ member.created_at|date:'F Y' }}</span>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-auto">
+                    {% if is_self %}
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-primary px-4"><i class="bi bi-pencil me-1"></i>Edit Profile</a>
+                    {% elif user.is_authenticated %}
+                        <button type="button" class="btn btn-primary px-4" disabled title="Exchange requests will be available in a later stage."><i class="bi bi-chat-heart me-1"></i>Request to Learn</button>
+                        <div class="small text-secondary mt-2 text-lg-end">Exchange requests coming soon.</div>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary px-4"><i class="bi bi-box-arrow-in-right me-1"></i>Log in to request learning</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <section class="member-skill-panel shadow-sm h-100 p-4 p-md-5">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="member-panel-icon"><i class="bi bi-lightbulb"></i></span>
+                        <div>
+                            <span class="page-eyebrow">Knowledge to share</span>
+                            <h2 class="h4 fw-bold mt-1 mb-0">Skills they offer</h2>
+                        </div>
+                    </div>
+                    {% if member.offered_skills.all %}
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for skill in member.offered_skills.all %}
+                                {% include 'includes/skill_badge.html' with skill=skill badge_class='skill-badge-large' show_category=True %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="profile-empty">No offered skills listed yet.</div>
+                    {% endif %}
+                </section>
+            </div>
+            <div class="col-md-6">
+                <section class="member-skill-panel member-skill-panel-accent shadow-sm h-100 p-4 p-md-5">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="member-panel-icon"><i class="bi bi-stars"></i></span>
+                        <div>
+                            <span class="page-eyebrow">Curiosity in motion</span>
+                            <h2 class="h4 fw-bold mt-1 mb-0">Skills they want to learn</h2>
+                        </div>
+                    </div>
+                    {% if member.wanted_skills.all %}
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for skill in member.wanted_skills.all %}
+                                {% include 'includes/skill_badge.html' with skill=skill badge_class='skill-badge-large skill-badge-accent' show_category=True %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="profile-empty">No learning goals listed yet.</div>
+                    {% endif %}
+                </section>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

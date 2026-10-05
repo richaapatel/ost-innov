@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Create a skill — SkillSwap{% endblock %}
+
+{% block content %}
+<section class="skills-page py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-xl-6">
+                <div class="card border-0 shadow-sm skill-create-fallback-card">
+                    <div class="card-body p-4 p-md-5">
+                        <a href="{% url 'skills:list' %}" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Back to skills</a>
+                        <span class="page-eyebrow d-block mt-4">Add to the library</span>
+                        <h1 class="h2 fw-bold mt-2">Create a new skill</h1>
+                        <p class="text-secondary mb-4">Add a useful skill for the SkillSwap community to discover.</p>
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endfor %}
+                            <div class="d-flex gap-2 pt-2">
+                                <a href="{% url 'skills:list' %}" class="btn btn-light border flex-grow-1">Cancel</a>
+                                <button type="submit" class="btn btn-primary flex-grow-1">Create skill</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -17,6 +17,19 @@ Registration requires a full name, a unique email address, and a password from 8
 
 Authenticated users can view and edit their current profile at `/profile/` (`accounts:profile`). The profile displays an initials avatar, name, read-only email address, bio, member-since date, and any existing offered or wanted skills. Users can edit only their name and bio; updates are validated server-side, CSRF-protected, and saved through a POST–redirect–GET flow. Anonymous users are redirected to login.
 
+## Skills, discovery, and public member profiles
+
+- Skills: `/skills/` (`skills:list`) is publicly viewable and supports case-insensitive search, description search, and database-backed category filters.
+- Authenticated users can create shared skills at `/skills/create/` and add or remove existing skills from their offered or wanted lists. These actions use CSRF-protected Django POST endpoints with progressive jQuery/AJAX enhancement.
+- Discovery: `/discover/` (`community:discover`) supports member-name search, offered-skill filters, wanted-skill filters, combined filters, and nine-member pagination.
+- Public profiles: `/members/<user_id>/` (`community:member_detail`) show only public profile information, initials, member-since date, and skill relationships. Email, password, permissions, and other private account data are not displayed.
+
+Example discovery URL:
+
+```text
+/discover/?search=python&offered_skill=3&wanted_skill=7
+```
+
 ## Stage 2 data layer
 
 - `Skill` stores normalized, case-insensitively unique skill names, descriptions, categories, and timestamps.
