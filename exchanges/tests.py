@@ -4,9 +4,10 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from skills.models import Skill
+from skills.services import add_user_skill
 
 from .models import Exchange
-from .services import ExchangeServiceError, change_exchange_status, create_exchange_request
+from .services import ExchangeServiceError, change_exchange_status, create_exchange_request, get_users_taught_count
 
 
 User = get_user_model()
@@ -261,3 +262,27 @@ class ExchangeWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 302)
         completed.refresh_from_db()
         self.assertEqual(completed.status, Exchange.Status.COMPLETED)
+
+    def test_completed_exchange_updates_teacher_dashboard_count_only(self):
+        self.learner.wanted_skills.add(Skill.objects.create(name='Learner Java'))
+        self.learner.offered_skills.add(self.skill)
+        with self.assertRaises(ValidationError):
+            add_user_skill(user=self.learner, skill=self.skill, kind='wanted')
+        self.assertFalse(self.learner.wanted_skills.filter(pk=self.skill.pk).exists())
+        self.client.force_login(self.learner)
+
+        request = create_exchange_request(
+            learner=self.learner,
+            teacher_id=self.teacher.pk,
+            skill_id=self.skill.pk,
+        )
+        change_exchange_status(exchange=request, actor=self.teacher, action=Exchange.Status.ACCEPTED)
+        change_exchange_status(exchange=request, actor=self.learner, action=Exchange.Status.COMPLETED)
+
+        self.assertEqual(get_users_taught_count(self.teacher), 1)
+        self.assertEqual(get_users_taught_count(self.learner), 0)
+
+        self.client.force_login(self.teacher)
+        dashboard = self.client.get(reverse('dashboard:index'))
+        self.assertEqual(dashboard.context['statistics']['users_taught_count'], 1)
+        self.assertContains(dashboard, 'Users taught')

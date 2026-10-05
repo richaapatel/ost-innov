@@ -1,8 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from .models import Skill
 
 
+User = get_user_model()
 VALID_KINDS = {'offered', 'wanted'}
 
 
@@ -22,16 +25,32 @@ def _validate_skill(skill):
 
 
 def add_user_skill(*, user, skill, kind):
-    """Idempotently associate a skill with a user's offered or wanted skills."""
-    manager = _skill_manager(user=user, kind=kind)
+    """Idempotently associate a skill while preventing offer/learn overlap."""
+    _skill_manager(user=user, kind=kind)
     _validate_skill(skill)
-    manager.add(skill)
+
+    with transaction.atomic():
+        locked_user = User.objects.select_for_update().get(pk=user.pk)
+        target = locked_user.offered_skills if kind == 'offered' else locked_user.wanted_skills
+        opposite = locked_user.wanted_skills if kind == 'offered' else locked_user.offered_skills
+        if opposite.filter(pk=skill.pk).exists():
+            if kind == 'offered':
+                raise ValidationError(
+                    'You already want to learn this skill. Remove it from your wanted skills before offering it.'
+                )
+            raise ValidationError(
+                'You already offer this skill. Remove it from your offered skills before adding it to your wanted skills.'
+            )
+        target.add(skill)
     return skill
 
 
 def remove_user_skill(*, user, skill, kind):
     """Remove a skill association without affecting the shared skill."""
-    manager = _skill_manager(user=user, kind=kind)
+    _skill_manager(user=user, kind=kind)
     _validate_skill(skill)
-    manager.remove(skill)
+    with transaction.atomic():
+        locked_user = User.objects.select_for_update().get(pk=user.pk)
+        manager = locked_user.offered_skills if kind == 'offered' else locked_user.wanted_skills
+        manager.remove(skill)
     return skill

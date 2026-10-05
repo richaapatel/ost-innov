@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import Client
 
+from exchanges.models import Exchange
+from exchanges.services import change_exchange_status, create_exchange_request, get_users_taught_count
 from skills.models import Skill
 
 from .utils import get_user_initials
@@ -351,7 +353,8 @@ class ProfileTests(TestCase):
         self.assertContains(response, 'I enjoy learning by teaching.')
         self.assertContains(response, self.user.created_at.strftime('%B %Y'))
         self.assertNotContains(response, 'name="email"')
-        self.assertNotContains(response, 'password')
+        self.assertNotContains(response, 'StrongPass9!')
+        self.assertNotContains(response, self.user.password)
 
     def test_offered_and_wanted_skills_are_displayed(self):
         python = Skill.objects.create(name='Python', category='Technology')
@@ -462,3 +465,97 @@ class ProfileTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+    def test_edit_profile_page_loads_with_existing_values(self):
+        response = self.client.get(reverse('accounts:profile_edit'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/profile_edit.html')
+        self.assertEqual(response.context['form'].initial['name'], 'Aryan Patel')
+        self.assertEqual(response.context['form'].initial['bio'], 'I enjoy learning by teaching.')
+        self.assertNotContains(response, 'name="email"')
+
+    def test_edit_profile_page_updates_name_and_bio(self):
+        response = self.client.post(
+            reverse('accounts:profile_edit'),
+            {'name': '  Updated Aryan  ', 'bio': '  A concise introduction.  '},
+        )
+
+        self.assertRedirects(response, reverse('accounts:profile'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, 'Updated Aryan')
+        self.assertEqual(self.user.bio, 'A concise introduction.')
+
+    def test_password_change_page_loads(self):
+        response = self.client.get(reverse('accounts:password_change'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/password_change.html')
+        self.assertNotContains(response, 'StrongPass9!')
+
+    def test_password_change_rejects_wrong_current_password(self):
+        response = self.client.post(reverse('accounts:password_change'), {
+            'old_password': 'WrongPass9!',
+            'new_password1': 'NewStrong9!',
+            'new_password2': 'NewStrong9!',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].errors)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('StrongPass9!'))
+
+    def test_password_change_rejects_mismatched_confirmation(self):
+        response = self.client.post(reverse('accounts:password_change'), {
+            'old_password': 'StrongPass9!',
+            'new_password1': 'NewStrong9!',
+            'new_password2': 'Different9!',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('new_password2', response.context['form'].errors)
+
+    def test_password_change_hashes_new_password_and_keeps_session(self):
+        response = self.client.post(reverse('accounts:password_change'), {
+            'old_password': 'StrongPass9!',
+            'new_password1': 'NewStrong9!',
+            'new_password2': 'NewStrong9!',
+        })
+
+        self.assertRedirects(response, reverse('accounts:profile'))
+        self.assertIn('_auth_user_id', self.client.session)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('NewStrong9!'))
+        self.assertFalse(self.user.check_password('StrongPass9!'))
+        self.assertNotEqual(self.user.password, 'NewStrong9!')
+        self.client.logout()
+        self.assertFalse(self.client.login(email='aryan@example.com', password='StrongPass9!'))
+        self.assertTrue(self.client.login(email='aryan@example.com', password='NewStrong9!'))
+
+    def test_users_taught_counts_unique_completed_learners(self):
+        skill = Skill.objects.create(name='Teaching Python')
+        second_skill = Skill.objects.create(name='Teaching Java')
+        self.user.offered_skills.add(skill, second_skill)
+        learner_one = User.objects.create_user(
+            email='learner-one@example.com', password='StrongPass9!', name='Learner One'
+        )
+        learner_two = User.objects.create_user(
+            email='learner-two@example.com', password='StrongPass9!', name='Learner Two'
+        )
+
+        first = create_exchange_request(learner=learner_one, teacher_id=self.user.pk, skill_id=skill.pk)
+        second = create_exchange_request(learner=learner_one, teacher_id=self.user.pk, skill_id=second_skill.pk)
+        third = create_exchange_request(learner=learner_two, teacher_id=self.user.pk, skill_id=skill.pk)
+
+        change_exchange_status(exchange=first, actor=self.user, action=Exchange.Status.ACCEPTED)
+        change_exchange_status(exchange=first, actor=self.user, action=Exchange.Status.COMPLETED)
+        change_exchange_status(exchange=second, actor=self.user, action=Exchange.Status.ACCEPTED)
+        change_exchange_status(exchange=second, actor=self.user, action=Exchange.Status.COMPLETED)
+        change_exchange_status(exchange=third, actor=self.user, action=Exchange.Status.ACCEPTED)
+        change_exchange_status(exchange=third, actor=self.user, action=Exchange.Status.REJECTED)
+
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertEqual(get_users_taught_count(self.user), 1)
+        self.assertContains(response, 'Users taught')
+        self.assertContains(response, '>1<')

@@ -67,6 +67,16 @@ def create_exchange_request(*, learner: User, teacher_id: int, skill_id: int, me
         raise
 
 
+def get_users_taught_count(user: User) -> int:
+    """Count unique learners connected through completed exchanges as teacher."""
+    if not getattr(user, 'pk', None):
+        return 0
+    return Exchange.objects.filter(
+        teacher_id=user.pk,
+        status=Exchange.Status.COMPLETED,
+    ).values('learner_id').distinct().count()
+
+
 def change_exchange_status(*, exchange: Exchange, actor: User, action: str) -> Exchange:
     """Apply one of the allowed status transitions with a row lock."""
     if not getattr(actor, 'pk', None):

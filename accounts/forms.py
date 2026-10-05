@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
@@ -148,3 +148,32 @@ class ProfileUpdateForm(forms.ModelForm):
 
     def clean_bio(self):
         return self.cleaned_data['bio'].strip()
+
+
+class ProfilePasswordChangeForm(PasswordChangeForm):
+    """Use Django's password-change validation with SkillSwap form styling."""
+
+    old_password = forms.CharField(
+        label='Current password',
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'autocomplete': 'current-password',
+            'placeholder': 'Enter your current password',
+        }),
+    )
+    new_password1 = forms.CharField(
+        label='New password',
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'autocomplete': 'new-password',
+            'placeholder': 'Create a new password',
+        }),
+    )
+    new_password2 = forms.CharField(
+        label='Confirm new password',
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'autocomplete': 'new-password',
+            'placeholder': 'Repeat your new password',
+        }),
+    )

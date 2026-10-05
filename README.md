@@ -7,6 +7,7 @@ SkillSwap is a Django monolith for learning and teaching skills in a community. 
 - Email-based Django session authentication with server-side password validation.
 - Current-user profile editing with public member profiles.
 - Searchable, category-filtered skill library with offered/wanted relationships.
+- A skill cannot be both offered and wanted by the same user; the rule is enforced transactionally on the server.
 - Community discovery and reciprocal skill matching.
 - Exchange requests with protected permissions and the state machine:
 
@@ -93,6 +94,8 @@ Authentication and profile:
 - `/accounts/login/` — email login (`accounts:login`)
 - `/accounts/logout/` — CSRF-protected POST logout (`accounts:logout`)
 - `/accounts/profile/` — authenticated profile (`accounts:profile`)
+- `/accounts/profile/edit/` — personal information editing (`accounts:profile_edit`)
+- `/accounts/profile/password/` — Django password change (`accounts:password_change`)
 
 Skills and community:
 
@@ -119,7 +122,9 @@ The chart endpoints require an authenticated session, return `image/png`, and ge
 
 ## Authentication and security
 
-Django manages password hashing, sessions, authentication cookies, middleware, and CSRF protection. Email addresses are normalized by the registration form, passwords are never displayed or stored in plaintext, and protected views use Django authentication decorators. Exchange permissions are rechecked in the service layer with transaction locking; a user can only act on their own requests or requests where they are the teacher.
+Django manages password hashing, sessions, authentication cookies, middleware, and CSRF protection. Email addresses are normalized by the registration form, passwords are never displayed or stored in plaintext, and protected views use Django authentication decorators. Exchange permissions are rechecked in the service layer with transaction locking; a user can only act on their own requests or requests where they are the teacher. Profile password changes use Django's `PasswordChangeForm` and preserve the authenticated session.
+
+Completed exchanges also provide a private `Users taught` statistic. It counts distinct learners for whom the current user is teacher, and only after exchanges reach `completed`.
 
 Public member profiles intentionally expose only name, bio, member-since date, initials, and skill relationships. Email, password data, permissions, and session details remain private.
 

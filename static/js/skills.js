@@ -65,6 +65,20 @@
             $form.toggleClass('d-none', (selected && $form.data('operation') === 'add') || (!selected && $form.data('operation') === 'remove'));
         });
 
+        const oppositeKind = kind === 'offered' ? 'wanted' : 'offered';
+        const $oppositeAddButton = $card.find('[data-skill-action-form][data-kind="' + oppositeKind + '"][data-operation="add"] button');
+        $oppositeAddButton.prop('disabled', selected).attr('aria-disabled', selected ? 'true' : 'false');
+        if (selected) {
+            $oppositeAddButton.attr(
+                'title',
+                kind === 'offered'
+                    ? 'Remove this skill from your offered skills before adding it to your learning goals.'
+                    : 'Remove this skill from your learning goals before offering it.'
+            );
+        } else {
+            $oppositeAddButton.removeAttr('title');
+        }
+
         const $state = $card.find('[data-skill-state="' + kind + '"]');
         $state.empty();
         if (selected) {

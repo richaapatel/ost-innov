@@ -72,6 +72,27 @@ class DashboardAccessAndContentTests(DashboardTestMixin, TestCase):
         self.assertNotEqual(received.pk, unrelated.pk)
         self.assertNotEqual(sent.pk, unrelated.pk)
 
+    def test_users_taught_counts_unique_completed_learners(self):
+        learner = self.create_user('dashboard-learner@example.com', 'Dashboard Learner')
+        second_skill = Skill.objects.create(name='Dashboard Second Skill', category='Technology')
+        self.user.offered_skills.add(second_skill)
+
+        first = create_exchange_request(learner=learner, teacher_id=self.user.pk, skill_id=self.python.pk)
+        second = create_exchange_request(learner=learner, teacher_id=self.user.pk, skill_id=second_skill.pk)
+
+        self.assertEqual(get_dashboard_statistics(self.user)['users_taught_count'], 0)
+        change_exchange_status(exchange=first, actor=self.user, action=Exchange.Status.ACCEPTED)
+        self.assertEqual(get_dashboard_statistics(self.user)['users_taught_count'], 0)
+        change_exchange_status(exchange=first, actor=self.user, action=Exchange.Status.COMPLETED)
+        change_exchange_status(exchange=second, actor=self.user, action=Exchange.Status.ACCEPTED)
+        change_exchange_status(exchange=second, actor=self.user, action=Exchange.Status.COMPLETED)
+
+        self.assertEqual(get_dashboard_statistics(self.user)['users_taught_count'], 1)
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('dashboard:index'))
+        self.assertContains(response, 'Users taught')
+
     def test_welcome_and_profile_summary_are_rendered_without_private_fields(self):
         self.user.bio = 'I enjoy teaching practical programming.'
         self.user.save(update_fields=('bio',))

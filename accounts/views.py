@@ -1,13 +1,15 @@
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 
-from .forms import LoginForm, ProfileUpdateForm, RegistrationForm
+from exchanges.services import get_users_taught_count
+
+from .forms import LoginForm, ProfilePasswordChangeForm, ProfileUpdateForm, RegistrationForm
 from .utils import get_user_initials
 
 
@@ -74,6 +76,11 @@ def profile(request):
             form.save()
             messages.success(request, 'Profile updated successfully.')
             return redirect('accounts:profile')
+        return render(request, 'accounts/profile_edit.html', {
+            'form': form,
+            'profile_user': request.user,
+            'initials': get_user_initials(request.user.name),
+        })
     else:
         form = ProfileUpdateForm(instance=request.user)
 
@@ -83,4 +90,32 @@ def profile(request):
         'initials': get_user_initials(request.user.name),
         'offered_skills': request.user.offered_skills.all(),
         'wanted_skills': request.user.wanted_skills.all(),
+        'users_taught_count': get_users_taught_count(request.user),
     })
+
+
+@login_required
+def profile_edit(request):
+    form = ProfileUpdateForm(request.POST or None, instance=request.user)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Profile updated successfully.')
+        return redirect('accounts:profile')
+
+    return render(request, 'accounts/profile_edit.html', {
+        'form': form,
+        'profile_user': request.user,
+        'initials': get_user_initials(request.user.name),
+    })
+
+
+@login_required
+def password_change(request):
+    form = ProfilePasswordChangeForm(request.user, request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        update_session_auth_hash(request, user)
+        messages.success(request, 'Password changed successfully.')
+        return redirect('accounts:profile')
+
+    return render(request, 'accounts/password_change.html', {'form': form})

@@ -118,13 +118,13 @@
                                 <div class="skill-actions border-top pt-3">
                                     <div class="d-flex flex-wrap gap-2">
                                         <form method="post" action="{% url 'skills:add_offered' skill.pk %}" class="skill-action-form{% if skill.pk in offered_ids %} d-none{% endif %}" data-skill-action-form data-kind="offered" data-operation="add">
-                                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-lightbulb me-1"></i>Add to offer</button>
+                                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-primary"{% if skill.pk in wanted_ids %} disabled aria-disabled="true" title="Remove this skill from your learning goals before offering it."{% endif %}><i class="bi bi-lightbulb me-1"></i>Add to offer</button>
                                         </form>
                                         <form method="post" action="{% url 'skills:remove_offered' skill.pk %}" class="skill-action-form{% if skill.pk not in offered_ids %} d-none{% endif %}" data-skill-action-form data-kind="offered" data-operation="remove">
                                             {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-dash-circle me-1"></i>Remove offer</button>
                                         </form>
                                         <form method="post" action="{% url 'skills:add_wanted' skill.pk %}" class="skill-action-form{% if skill.pk in wanted_ids %} d-none{% endif %}" data-skill-action-form data-kind="wanted" data-operation="add">
-                                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-stars me-1"></i>Add to learn</button>
+                                            {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-success"{% if skill.pk in offered_ids %} disabled aria-disabled="true" title="Remove this skill from your offered skills before adding it to your learning goals."{% endif %}><i class="bi bi-stars me-1"></i>Add to learn</button>
                                         </form>
                                         <form method="post" action="{% url 'skills:remove_wanted' skill.pk %}" class="skill-action-form{% if skill.pk not in wanted_ids %} d-none{% endif %}" data-skill-action-form data-kind="wanted" data-operation="remove">
                                             {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-dash-circle me-1"></i>Remove learning</button>

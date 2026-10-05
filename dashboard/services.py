@@ -3,6 +3,7 @@ from django.db.models import Count, Q
 
 from community.services import get_match_results
 from exchanges.models import Exchange
+from exchanges.services import get_users_taught_count
 from skills.models import Skill
 
 
@@ -38,6 +39,7 @@ def get_dashboard_statistics(user):
         'offered_count': counts['offered_count'],
         'wanted_count': counts['wanted_count'],
         'pending_count': pending_count,
+        'users_taught_count': get_users_taught_count(user),
     }
 
 
